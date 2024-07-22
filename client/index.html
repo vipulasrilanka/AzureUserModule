@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>User Birthday</title>
+    <title>User Birthday Ver 0.01</title>
 </head>
 <body>
     <h1>User Birthday</h1>
@@ -23,7 +23,7 @@
         document.getElementById('getUserForm').onsubmit = async function(event) {
             event.preventDefault();
             const username = document.getElementById('username').value;
-            const response = await fetch(`YOUR_FUNCTION_APP_URL/api/GetUserBirthday?username=${username}`);
+            const response = await fetch(`https://polite-sand-0c33def00.5.azurestaticapps.net/api/GetUserBirthday?username=${username}`);
             const user = await response.json();
             if (response.status === 200) {
                 document.getElementById('userInfo').style.display = 'block';
@@ -37,7 +37,7 @@
             event.preventDefault();
             const username = document.getElementById('username').value;
             const birthday = document.getElementById('birthday').value;
-            const response = await fetch(`YOUR_FUNCTION_APP_URL/api/UpdateUserBirthday`, {
+            const response = await fetch(`https://polite-sand-0c33def00.5.azurestaticapps.net/api/UpdateUserBirthday`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
