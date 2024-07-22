@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Birthday</title>
+</head>
+<body>
+    <h1>User Birthday</h1>
+    <form id="getUserForm">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username">
+        <button type="submit">Get Birthday</button>
+    </form>
+    <div id="userInfo" style="display:none;">
+        <form id="updateBirthdayForm">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" readonly>
+            <label for="birthday">Birthday:</label>
+            <input type="date" id="birthday" name="birthday">
+            <button type="submit">Update Birthday</button>
+        </form>
+    </div>
+    <script>
+        document.getElementById('getUserForm').onsubmit = async function(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const response = await fetch(`YOUR_FUNCTION_APP_URL/api/GetUserBirthday?username=${username}`);
+            const user = await response.json();
+            if (response.status === 200) {
+                document.getElementById('userInfo').style.display = 'block';
+                document.getElementById('name').value = user.Name;
+                document.getElementById('birthday').value = user.Birthday;
+            } else {
+                alert(user);
+            }
+        };
+        document.getElementById('updateBirthdayForm').onsubmit = async function(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const birthday = document.getElementById('birthday').value;
+            const response = await fetch(`YOUR_FUNCTION_APP_URL/api/UpdateUserBirthday`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, birthday })
+            });
+            const result = await response.text();
+            alert(result);
+        };
+    </script>
+</body>
+</html>
