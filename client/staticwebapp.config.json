@@ -1,0 +1,13 @@
+{
+  "auth": {
+    "identityProviders": {
+      "azureActiveDirectoryB2C": {
+        "registration": {
+          "clientIdSettingName": "B2C_CLIENT_ID",
+          "clientSecretSettingName": "B2C_CLIENT_SECRET",
+          "tenantId": "YOUR_B2C_TENANT_ID"
+        }
+      }
+    }
+  }
+}
