@@ -54,7 +54,7 @@
                 }
                 const data = await response.json();
                 /** data is an array of objects. We will print only the first element of it. */
-                document.getElementById('birthday').value = data[0].Birthday || 'Birthday not found';
+                document.getElementById('birthday').value = data[0].BirthDate || 'Birthday not found';
             } catch (error) {
                 console.error('Error fetching birthday:', error);
                 document.getElementById('birthday').value = 'Error fetching birthday';
