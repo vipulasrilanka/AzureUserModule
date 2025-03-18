@@ -27,7 +27,7 @@ async function login() {
 
     try {
         const passwordHash = await sha256(password);
-        const response = await fetch(`${window.__env.AZURE_FUNCTION_URL}?code=${window.__env.AZURE_FUNCTION_KEY}`, {
+        const response = await fetch(`${process.env.AZURE_FUNCTION_URL}?code=${process.env.AZURE_FUNCTION_KEY}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
