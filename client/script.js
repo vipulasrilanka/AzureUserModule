@@ -6,12 +6,6 @@ const devices = [
     { name: "Garden Light", type: "light", currentState: "OFF" }
 ];
 
-// Azure Function configuration
-const config = {
-    apiUrl: "{% AZURE_FUNCTION_URL %}",
-    apiKey: "{% AZURE_FUNCTION_KEY %}"
-};
-
 // Function to convert string to SHA-256 hash
 async function sha256(message) {
     const msgBuffer = new TextEncoder().encode(message);                    
@@ -33,7 +27,7 @@ async function login() {
 
     try {
         const passwordHash = await sha256(password);
-        const response = await fetch(`${config.apiUrl}?code=${config.apiKey}`, {
+        const response = await fetch(`${window.ENV.AZURE_FUNCTION_URL}?code=${window.ENV.AZURE_FUNCTION_KEY}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
