@@ -1,5 +1,3 @@
-import config from './config.js';
-
 // Dummy data for devices with current state
 const devices = [
     { name: "Main Door", type: "door", currentState: "LOCK" },
@@ -29,7 +27,7 @@ async function login() {
 
     try {
         const passwordHash = await sha256(password);
-        const response = await fetch(`${config.apiUrl}?code=${config.apiKey}`, {
+        const response = await fetch(`${window.__env.AZURE_FUNCTION_URL}?code=${window.__env.AZURE_FUNCTION_KEY}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
