@@ -3,145 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Form with Table and Row Editing</title>
-    <style>
-        /* General styling */
-        body {
-            font-family: Arial, sans-serif;
-        }
-
-        /* Header styling */
-        header {
-            text-align: center;
-            padding: 20px;
-        }
-
-        /* Inline form styling */
-        .inline-form {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-
-        .inline-form label, 
-        .inline-form input[type="text"], 
-        .inline-form button {
-            font-size: 16px;
-        }
-
-        /* Table styling */
-        table {
-            width: 80%;
-            margin: 0 auto;
-            border-collapse: collapse;
-        }
-
-        th, td {
-            padding: 10px;
-            border: 1px solid #ccc;
-            text-align: center;
-        }
-
-        th {
-            background-color: #f4f4f4;
-        }
-
-        /* Editable form styling */
-        .edit-form {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            justify-content: center;
-            margin-top: 20px;
-        }
-
-        .edit-form input[type="text"] {
-            padding: 5px;
-            font-size: 16px;
-        }
-
-        .edit-form button {
-            padding: 5px 10px;
-            font-size: 16px;
-        }
-    </style>
+    <title>Nonimi Home Control</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <!-- Page header -->
     <header>
-        <h1>User Information</h1>
+        <h1>Nonimi Home Control</h1>
     </header>
 
-    <!-- Form with label, input, and button in the same row -->
-    <form class="inline-form" onsubmit="addUserData(); return false;">
-        <label for="name">User Name:</label>
-        <input type="text" id="name" name="name" required>
-        <button type="submit">Search</button>
-    </form>
+    <!-- Login form -->
+    <div class="login-form" id="login-page">
+        <input type="text" id="username" placeholder="Username" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <button onclick="login()">Login</button>
+    </div>
 
-    <!-- Table for displaying user data -->
-    <table>
-        <thead>
-            <tr>
-                <th>User ID</th>
-                <th>Full Name</th>
-                <th>Email</th>
-                <th>Date of Birth</th>
-            </tr>
-        </thead>
-        <tbody id="user-data">
-            <!-- JavaScript will dynamically insert rows here -->
-        </tbody>
-    </table>
+    <!-- Control page -->
+    <div id="control-page" style="display:none;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Device</th>
+                    <th>Current State</th>
+                    <th>State</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="device-data">
+                <!-- JavaScript will dynamically insert rows here -->
+            </tbody>
+        </table>
+    </div>
 
-    <!-- Editable form below the table for updating email -->
-    <form class="edit-form" onsubmit="updateEmail(); return false;">
-        <label id="user-id-label">User ID: </label>
-        <input type="text" id="new-email" name="new-email" placeholder="Enter new email" required>
-        <button type="submit">Update Email</button>
-    </form>
-
-    <script>
-        let selectedRow = null;
-
-        // Function to add a row with user data
-        function addUserData() {
-            const userId = document.querySelectorAll('#user-data tr').length + 1;
-            const fullName = document.getElementById('name').value;
-            const email = "example@email.com"; // Hardcoded for now
-            const dob = "1990-01-01"; // Hardcoded for now
-
-            const tableBody = document.getElementById('user-data');
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${userId}</td>
-                <td>${fullName}</td>
-                <td class="email">${email}</td>
-                <td>${dob}</td>
-            `;
-
-            row.addEventListener('click', () => selectRow(row)); // Add event listener to row click
-            tableBody.appendChild(row);
-        }
-
-        // Function to select a row and populate the form below with the User ID
-        function selectRow(row) {
-            const userId = row.cells[0].innerText;
-            selectedRow = row; // Set selected row
-            document.getElementById('user-id-label').innerText = `User ID: ${userId}`;
-        }
-
-        // Function to update the email of the selected row
-        function updateEmail() {
-            if (selectedRow) {
-                const newEmail = document.getElementById('new-email').value;
-                selectedRow.querySelector('.email').innerText = newEmail; // Update email in the selected row
-            }
-        }
-    </script>
+    <script src="script.js"></script>
 
 </body>
 </html>
