@@ -118,29 +118,43 @@ function getStateOptions(deviceType, states) {
 
 async function setDeviceState(deviceId, stateId) {
     try {
-        const username = localStorage.getItem('username');
-        const sessionToken = localStorage.getItem('authToken');
+        const response = await fetch(`${window.APP_CONFIG.SET_DEVICE_URL}?code=${window.APP_CONFIG.SET_DEVICE_KEY}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                DeviceID: deviceId,
+                StateID: stateId,
+                SessionToken: localStorage.getItem('authToken')
+            })
+        });
 
-        if (!username || !sessionToken) {
-            alert('Session expired. Please login again.');
-            document.getElementById('login-page').style.display = 'block';
-            document.getElementById('control-page').style.display = 'none';
-            return;
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to set device state');
         }
 
-        // TODO: Implement the API call to update device state
-        // For now, just update the UI
+        const data = await response.json();
+        
+        // Update the UI with the new device state
         const currentStateElement = document.getElementById(`current-state-${deviceId}`);
         if (currentStateElement) {
-            // Find the state name from the states array
-            const stateName = document.getElementById(`select-${deviceId}`).options[
-                document.getElementById(`select-${deviceId}`).selectedIndex
-            ].text;
-            currentStateElement.textContent = stateName;
+            currentStateElement.textContent = data.device.Status;
         }
+
+        // Show success message
+        showMessage('Device state updated successfully', 'success');
     } catch (error) {
         console.error('Error setting device state:', error);
-        alert('Failed to update device state. Please try again.');
+        showMessage(error.message || 'Failed to set device state', 'error');
+        
+        // If the error is due to an invalid session token, redirect to login
+        if (error.message.includes('session token')) {
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 2000);
+        }
     }
 }
 
