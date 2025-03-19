@@ -11,7 +11,6 @@ on:
 
 jobs:
   build_and_deploy_job:
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     name: Build and Deploy Job
     steps:
@@ -31,7 +30,9 @@ jobs:
           echo "  AZURE_FUNCTION_URL: '${{ secrets.AZURE_FUNCTION_URL }}'," >> client/config.js
           echo "  AZURE_FUNCTION_KEY: '${{ secrets.AZURE_FUNCTION_KEY }}'," >> client/config.js
           echo "  GET_DEVICE_URL: '${{ secrets.GET_DEVICE_URL }}'," >> client/config.js
-          echo "  GET_DEVICE_KEY: '${{ secrets.GET_DEVICE_KEY }}'" >> client/config.js
+          echo "  GET_DEVICE_KEY: '${{ secrets.GET_DEVICE_KEY }}'," >> client/config.js
+          echo "  SET_DEVICE_URL: '${{ secrets.SET_DEVICE_URL }}'," >> client/config.js
+          echo "  SET_DEVICE_KEY: '${{ secrets.SET_DEVICE_KEY }}'" >> client/config.js
           echo "};" >> client/config.js
       
       - name: Build And Deploy
@@ -42,13 +43,14 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
           app_location: "client"
-          output_location: "."
+          api_location: "server"
+          output_location: ""
 
   close_pull_request_job:
-    if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
     name: Close Pull Request Job
     needs: build_and_deploy_job
+    if: ${{ github.event_name == 'pull_request' && github.event.action == 'closed' }}
     steps:
       - name: Close Pull Request
         id: closepullrequest

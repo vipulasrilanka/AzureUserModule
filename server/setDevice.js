@@ -20,7 +20,6 @@ const staticStates = [
 
     { UniqueID: 8, StateID: "LCH__ON", StateName: "AUTO", StateSetTo: "WAITING", DeviceType: "Lock-Self-Latch", FunctionID: null },
     { UniqueID: 9, StateID: "LCH_REL", StateName: "RELEASE", StateSetTo: "OPEN", DeviceType: "Lock-Self-Latch", FunctionID: null }
-
 ];
 
 // Static device data following the schema from Query 1.json
@@ -101,18 +100,18 @@ module.exports = async function (context, req) {
     context.log('JavaScript HTTP trigger function processed a request.');
 
     // Check for required fields
-    if (!req.body || !req.body.CreatedUserID || !req.body.SessionToken) {
+    if (!req.body || !req.body.DeviceID || !req.body.StateID || !req.body.SessionToken) {
         context.res = {
             status: 400,
             body: {
                 error: "Missing required fields",
-                message: "CreatedUserID and SessionToken are required in the request body"
+                message: "DeviceID, StateID, and SessionToken are required in the request body"
             }
         };
         return;
     }
 
-    const { CreatedUserID, SessionToken, DeviceID, DeviceName } = req.body;
+    const { DeviceID, StateID, SessionToken } = req.body;
 
     // Validate session token
     if (SessionToken !== VALID_TOKEN) {
@@ -126,57 +125,53 @@ module.exports = async function (context, req) {
         return;
     }
 
-    // Filter devices based on CreatedUserID
-    let userDevices = staticDevices.filter(device => device.CreatedUserID === CreatedUserID);
-
-    // If no devices found for the user
-    if (userDevices.length === 0) {
+    // Find the device
+    const deviceIndex = staticDevices.findIndex(device => device.DeviceID === DeviceID);
+    if (deviceIndex === -1) {
         context.res = {
             status: 404,
             body: {
-                error: "No devices found",
-                message: `No devices found for user ${CreatedUserID}`
+                error: "Device not found",
+                message: `No device found with ID ${DeviceID}`
             }
         };
         return;
     }
 
-    // If device filters are provided, apply them
-    if (DeviceID || DeviceName) {
-        userDevices = userDevices.filter(device => {
-            if (DeviceID && device.DeviceID === DeviceID) return true;
-            if (DeviceName && device.DeviceName === DeviceName) return true;
-            return false;
-        });
-
-        // If no matching devices found after filtering
-        if (userDevices.length === 0) {
-            context.res = {
-                status: 404,
-                body: {
-                    error: "No matching devices found",
-                    message: "No devices found matching the provided criteria"
-                }
-            };
-            return;
-        }
+    // Find the state
+    const state = staticStates.find(s => s.StateID === StateID);
+    if (!state) {
+        context.res = {
+            status: 404,
+            body: {
+                error: "State not found",
+                message: `No state found with ID ${StateID}`
+            }
+        };
+        return;
     }
 
-    // Get unique device types from the filtered devices
-    const deviceTypes = [...new Set(userDevices.map(device => device.DeviceType))];
+    // Verify that the state is applicable to the device type
+    if (state.DeviceType !== staticDevices[deviceIndex].DeviceType) {
+        context.res = {
+            status: 400,
+            body: {
+                error: "Invalid state for device type",
+                message: `State ${StateID} is not applicable for device type ${staticDevices[deviceIndex].DeviceType}`
+            }
+        };
+        return;
+    }
 
-    // Get applicable states for the device types
-    const applicableStates = staticStates.filter(state => 
-        deviceTypes.includes(state.DeviceType)
-    );
+    // Update the device status
+    staticDevices[deviceIndex].Status = state.StateSetTo;
 
-    // Return the filtered devices and applicable states
+    // Return the updated device
     context.res = {
         status: 200,
         body: {
-            devices: userDevices,
-            count: userDevices.length,
-            states: applicableStates
+            message: "Device state updated successfully",
+            device: staticDevices[deviceIndex]
         }
     };
 }
