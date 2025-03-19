@@ -4,7 +4,9 @@ const fs = require('fs');
 // Read environment variables or fallback to defaults
 const config = {
   AZURE_FUNCTION_URL: process.env.AZURE_FUNCTION_URL || 'http://localhost:7071/api/userLogin',
-  AZURE_FUNCTION_KEY: process.env.AZURE_FUNCTION_KEY || 'local-development-key'
+  AZURE_FUNCTION_KEY: process.env.AZURE_FUNCTION_KEY || 'local-development-key',
+  GET_DEVICE_URL: process.env.GET_DEVICE_URL || 'http://localhost:7071/api/getDevice',
+  GET_DEVICE_KEY: process.env.GET_DEVICE_KEY || 'local-development-key'
 };
 
 // Write the configuration to a file
