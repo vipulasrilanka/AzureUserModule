@@ -7,6 +7,32 @@ body {
     color: #000;
 }
 
+/* Message styles */
+.message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 1rem;
+    border-radius: 4px;
+    color: #fff;
+    z-index: 1000;
+    min-width: 200px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.message.success {
+    background-color: #28a745;
+}
+
+.message.error {
+    background-color: #dc3545;
+}
+
+.message.info {
+    background-color: #17a2b8;
+}
+
 header {
     background-color: #000;
     color: #f00;

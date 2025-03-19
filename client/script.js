@@ -116,6 +116,22 @@ function getStateOptions(deviceType, states) {
     ).join('');
 }
 
+// Function to show messages to the user
+function showMessage(message, type = 'info') {
+    const messageDiv = document.getElementById('message');
+    if (messageDiv) {
+        messageDiv.textContent = message;
+        messageDiv.className = `message ${type}`;
+        messageDiv.style.display = 'block';
+        setTimeout(() => {
+            messageDiv.style.display = 'none';
+        }, 3000);
+    } else {
+        // Fallback to alert if message div doesn't exist
+        alert(message);
+    }
+}
+
 async function setDeviceState(deviceId, stateId) {
     try {
         const response = await fetch(`${window.APP_CONFIG.SET_DEVICE_URL}?code=${window.APP_CONFIG.SET_DEVICE_KEY}`, {
