@@ -68,4 +68,25 @@ th {
 .control-form select, .control-form button {
     padding: 5px;
     font-size: 16px;
+}
+
+/* Version information styles */
+footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #f8f9fa;
+    padding: 10px;
+    text-align: center;
+    border-top: 1px solid #dee2e6;
+}
+
+.version-info {
+    font-size: 0.8em;
+    color: #6c757d;
+}
+
+.version-info span {
+    margin: 0 10px;
 } 

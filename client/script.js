@@ -144,6 +144,23 @@ async function setDeviceState(deviceId, stateId) {
     }
 }
 
+// Function to display version information
+function displayVersionInfo() {
+    const versionText = document.getElementById('version-text');
+    const deployTime = document.getElementById('deploy-time');
+    
+    if (window.APP_VERSION) {
+        versionText.textContent = `Version: ${window.APP_VERSION}`;
+    }
+    
+    if (window.DEPLOY_TIME) {
+        deployTime.textContent = `Deployed: ${window.DEPLOY_TIME}`;
+    }
+}
+
+// Call displayVersionInfo when the page loads
+document.addEventListener('DOMContentLoaded', displayVersionInfo);
+
 // Make functions available globally
 window.login = login;
 window.setDeviceState = setDeviceState; 
