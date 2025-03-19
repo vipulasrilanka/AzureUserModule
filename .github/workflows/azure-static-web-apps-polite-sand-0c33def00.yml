@@ -27,6 +27,8 @@ jobs:
       - name: Generate Config File
         run: |
           echo "window.APP_CONFIG = {" > client/config.js
+          echo "  AZURE_FUNCTION_URL: '${{ secrets.AZURE_FUNCTION_URL }}'," >> client/config.js
+          echo "  AZURE_FUNCTION_KEY: '${{ secrets.AZURE_FUNCTION_KEY }}'," >> client/config.js
           echo "  GET_DEVICE_URL: '${{ secrets.GET_DEVICE_URL }}'," >> client/config.js
           echo "  GET_DEVICE_KEY: '${{ secrets.GET_DEVICE_KEY }}'," >> client/config.js
           echo "  SET_DEVICE_URL: '${{ secrets.SET_DEVICE_URL }}'," >> client/config.js

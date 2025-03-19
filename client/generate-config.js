@@ -10,6 +10,8 @@ const deployTime = new Date().toISOString();
 
 // Create config object with environment variables
 const config = {
+    AZURE_FUNCTION_URL: process.env.AZURE_FUNCTION_URL || 'http://localhost:7071/api/userLogin',
+    AZURE_FUNCTION_KEY: process.env.AZURE_FUNCTION_KEY || 'local-development-key',
     GET_DEVICE_URL: process.env.GET_DEVICE_URL || 'http://localhost:7071/api/getDevice',
     GET_DEVICE_KEY: process.env.GET_DEVICE_KEY || 'local-development-key',
     SET_DEVICE_URL: process.env.SET_DEVICE_URL || 'http://localhost:7071/api/setDevice',
