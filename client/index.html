@@ -14,30 +14,54 @@
     </header>
 
     <!-- Login form -->
-    <div class="login-form" id="login-page">
-        <input type="text" id="username" placeholder="Username" required>
-        <input type="password" id="password" placeholder="Password" required>
-        <button onclick="login()">Login</button>
+    <div id="login-page">
+        <div class="login-container">
+            <h2>Login</h2>
+            <form onsubmit="event.preventDefault(); login();">
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit">Login</button>
+            </form>
+        </div>
     </div>
 
     <!-- Control page -->
-    <div id="control-page" style="display:none;">
-        <table>
-            <thead>
-                <tr>
-                    <th>Device</th>
-                    <th>Current State</th>
-                    <th>State</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="device-data">
-                <!-- JavaScript will dynamically insert rows here -->
-            </tbody>
-        </table>
+    <div id="control-page" style="display: none;">
+        <div class="control-container">
+            <h2>Device Control</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Device Name</th>
+                        <th>Current State</th>
+                        <th>New State</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="device-data">
+                    <!-- Device data will be loaded here -->
+                </tbody>
+            </table>
+        </div>
     </div>
 
+    <!-- Version information -->
+    <footer>
+        <div class="version-info">
+            <span id="version-text"></span>
+            <span id="deploy-time"></span>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
     <script src="config.js"></script>
+    <script src="version.js"></script>
     <script src="script.js"></script>
 
 </body>
