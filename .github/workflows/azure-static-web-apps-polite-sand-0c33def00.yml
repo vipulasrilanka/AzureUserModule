@@ -30,6 +30,8 @@ jobs:
         env:
           AZURE_FUNCTION_URL: ${{ secrets.AZURE_FUNCTION_URL }}
           AZURE_FUNCTION_KEY: ${{ secrets.AZURE_FUNCTION_KEY }}
+          GET_DEVICE_URL: ${{ secrets.GET_DEVICE_URL }}
+          GET_DEVICE_KEY: ${{ secrets.GET_DEVICE_KEY }}
       
       - name: Build And Deploy
         id: builddeploy

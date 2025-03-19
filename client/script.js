@@ -1,11 +1,3 @@
-// Dummy data for devices with current state
-const devices = [
-    { name: "Main Door", type: "door", currentState: "LOCK" },
-    { name: "Garage Gate", type: "gate", currentState: "UNLOCK" },
-    { name: "Bedroom AC", type: "ac", currentState: "23" },
-    { name: "Garden Light", type: "light", currentState: "OFF" }
-];
-
 // Function to convert string to SHA-256 hash
 async function sha256(message) {
     const msgBuffer = new TextEncoder().encode(message);                    
@@ -42,6 +34,7 @@ async function login() {
 
         if (response.ok) {
             localStorage.setItem('authToken', data.token);
+            localStorage.setItem('username', username);
             document.getElementById('login-page').style.display = 'none';
             document.getElementById('control-page').style.display = 'block';
             loadDevices();
@@ -54,45 +47,100 @@ async function login() {
     }
 }
 
-// Function to load devices into the table
-function loadDevices() {
-    const tableBody = document.getElementById('device-data');
-    tableBody.innerHTML = '';
-    devices.forEach(device => {
-        const row = document.createElement('tr');
-        const stateOptions = getStateOptions(device.type);
-        row.innerHTML = `
-            <td>${device.name}</td>
-            <td id="current-state-${device.name.replace(/\s+/g, '-').toLowerCase()}">${device.currentState}</td>
-            <td>
-                <select id="select-${device.name.replace(/\s+/g, '-').toLowerCase()}">${stateOptions}</select>
-            </td>
-            <td>
-                <button onclick="setDeviceState('${device.name}', document.getElementById('select-${device.name.replace(/\s+/g, '-').toLowerCase()}').value)">Set</button>
-            </td>
-        `;
-        tableBody.appendChild(row);
-    });
-}
+// Function to load devices from the backend
+async function loadDevices() {
+    try {
+        const username = localStorage.getItem('username');
+        const sessionToken = localStorage.getItem('authToken');
 
-function getStateOptions(type) {
-    switch(type) {
-        case 'light': return '<option>ON</option><option>OFF</option>';
-        case 'door':
-        case 'gate': return '<option>LOCK</option><option>UNLOCK</option>';
-        case 'ac': return '<option>OFF</option><option>22</option><option>23</option><option>24</option><option>25</option>';
-        default: return '';
+        if (!username || !sessionToken) {
+            alert('Session expired. Please login again.');
+            document.getElementById('login-page').style.display = 'block';
+            document.getElementById('control-page').style.display = 'none';
+            return;
+        }
+
+        const response = await fetch(`${window.APP_CONFIG.GET_DEVICE_URL}?code=${window.APP_CONFIG.GET_DEVICE_KEY}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                CreatedUserID: username,
+                SessionToken: sessionToken
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            const tableBody = document.getElementById('device-data');
+            tableBody.innerHTML = '';
+            
+            data.devices.forEach(device => {
+                const row = document.createElement('tr');
+                const stateOptions = getStateOptions(device.DeviceType, data.states);
+                row.innerHTML = `
+                    <td>${device.DeviceName}</td>
+                    <td id="current-state-${device.DeviceID}">${device.Status}</td>
+                    <td>
+                        <select id="select-${device.DeviceID}">${stateOptions}</select>
+                    </td>
+                    <td>
+                        <button onclick="setDeviceState('${device.DeviceID}', document.getElementById('select-${device.DeviceID}').value)">Set</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        } else {
+            alert(data.message || 'Failed to load devices. Please try again.');
+            if (response.status === 401) {
+                // Session expired
+                document.getElementById('login-page').style.display = 'block';
+                document.getElementById('control-page').style.display = 'none';
+            }
+        }
+    } catch (error) {
+        console.error('Error loading devices:', error);
+        alert('Failed to load devices. Please try again.');
     }
 }
 
-function setDeviceState(deviceName, state) {
-    const device = devices.find(d => d.name === deviceName);
-    if (device) {
-        device.currentState = state;
-        const currentStateElement = document.getElementById(`current-state-${deviceName.replace(/\s+/g, '-').toLowerCase()}`);
-        if (currentStateElement) {
-            currentStateElement.textContent = state;
+function getStateOptions(deviceType, states) {
+    // Filter states for the given device type
+    const deviceStates = states.filter(state => state.DeviceType === deviceType);
+    
+    // Create options from the filtered states
+    return deviceStates.map(state => 
+        `<option value="${state.StateID}">${state.StateName}</option>`
+    ).join('');
+}
+
+async function setDeviceState(deviceId, stateId) {
+    try {
+        const username = localStorage.getItem('username');
+        const sessionToken = localStorage.getItem('authToken');
+
+        if (!username || !sessionToken) {
+            alert('Session expired. Please login again.');
+            document.getElementById('login-page').style.display = 'block';
+            document.getElementById('control-page').style.display = 'none';
+            return;
         }
+
+        // TODO: Implement the API call to update device state
+        // For now, just update the UI
+        const currentStateElement = document.getElementById(`current-state-${deviceId}`);
+        if (currentStateElement) {
+            // Find the state name from the states array
+            const stateName = document.getElementById(`select-${deviceId}`).options[
+                document.getElementById(`select-${deviceId}`).selectedIndex
+            ].text;
+            currentStateElement.textContent = stateName;
+        }
+    } catch (error) {
+        console.error('Error setting device state:', error);
+        alert('Failed to update device state. Please try again.');
     }
 }
 
