@@ -108,40 +108,39 @@ VALUES
 ('REJECTED', 'Device registration was rejected');
 
 -- Insert devices
-INSERT INTO [dbo].[Devices] (SerialNumber, DeviceTypeID, DeviceName, DeviceDescription, CreatedUserID, LocationID, DeviceStatus, PortID, LockPin, MacAddress)
+INSERT INTO [dbo].[Devices] (SerialNumber, DeviceTypeID, DeviceName, DeviceDescription, CreatedUserID, LocationID, DeviceStateID, PortID, LockPin, MacAddress)
 VALUES 
-('DL001', 100000, 'Front Door', 'Main entrance door lock', 100000, 100000, 'ACTIVE', 1, 1234, '00:11:22:33:44:55'),
-('DL002', 100000, 'Back Door', 'Back entrance door lock', 100000, 100000, 'ACTIVE', 2, 5678, '00:11:22:33:44:66'),
-('GV001', 100001, 'Main Gas Valve', 'Main gas supply valve', 100000, 100000, 'ACTIVE', 3, NULL, '00:11:22:33:44:77'),
-('WV001', 100002, 'Main Water Valve', 'Main water supply valve', 100000, 100000, 'ACTIVE', 4, NULL, '00:11:22:33:44:88'),
-('SD001', 100003, 'Kitchen Smoke Detector', 'Kitchen area smoke detector', 100000, 100000, 'ACTIVE', 5, NULL, '00:11:22:33:44:99'),
-('MS001', 100004, 'Living Room Motion', 'Living room motion sensor', 100000, 100000, 'ACTIVE', 6, NULL, '00:11:22:33:44:AA'),
-('SC001', 100005, 'Front Camera', 'Front door security camera', 100000, 100000, 'ACTIVE', 7, NULL, '00:11:22:33:44:BB'),
-('DS001', 100006, 'Garage Door Sensor', 'Garage door magnetic sensor', 100000, 100001, 'ACTIVE', 8, NULL, '00:11:22:33:44:CC'),
-('GD001', 100007, 'Garage Door', 'Garage door controller', 100000, 100001, 'ACTIVE', 9, 9012, '00:11:22:33:44:DD');
-
+('DL001', 100000, 'Front Door', 'Main entrance door lock', 100000, 100000, 100003, 1, 1234, '00:11:22:33:44:55'),
+('DL002', 100000, 'Back Door', 'Back entrance door lock', 100000, 100000, 100003, 2, 5678, '00:11:22:33:44:66'),
+('GV001', 100001, 'Main Gas Valve', 'Main gas supply valve', 100000, 100000, 100003, 3, NULL, '00:11:22:33:44:77'),
+('WV001', 100002, 'Main Water Valve', 'Main water supply valve', 100000, 100000, 100003, 4, NULL, '00:11:22:33:44:88'),
+('SD001', 100003, 'Kitchen Smoke Detector', 'Kitchen area smoke detector', 100000, 100000, 100003, 5, NULL, '00:11:22:33:44:99'),
+('MS001', 100004, 'Living Room Motion', 'Living room motion sensor', 100000, 100000, 100003, 6, NULL, '00:11:22:33:44:AA'),
+('SC001', 100005, 'Front Camera', 'Front door security camera', 100000, 100000, 100003, 7, NULL, '00:11:22:33:44:BB'),
+('DS001', 100006, 'Garage Door Sensor', 'Garage door magnetic sensor', 100000, 100001, 100003, 8, NULL, '00:11:22:33:44:CC'),
+('GD001', 100007, 'Garage Door', 'Garage door controller', 100000, 100001, 100003, 9, 9012, '00:11:22:33:44:DD');
 -- Insert events
-INSERT INTO [dbo].[Events] (EventTypeID, EventValueID, EventDescription, DeviceID, CreatedUserID)
+INSERT INTO [dbo].[Events] (EventValueID, EventDescription, DeviceID, CreatedUserID)
 VALUES 
 -- State changes
-(100000, 100000, 'Door locked by admin', 100000, 100000),
-(100000, 100001, 'Door unlocked by admin', 100000, 100000),
-(100000, 100002, 'Gas valve opened by admin', 100002, 100000),
-(100000, 100003, 'Water valve closed by admin', 100003, 100000),
+(100000, 'Door locked by admin', 100000, 100000),
+(100001, 'Door unlocked by admin', 100000, 100000),
+(100002, 'Gas valve opened by admin', 100002, 100000),
+(100003, 'Water valve closed by admin', 100003, 100000),
 
 -- Activation events
-(100001, 100005, 'Device activated by admin', 100000, 100000),
-(100001, 100006, 'Device deactivated by admin', 100001, 100000),
+(100005, 'Device activated by admin', 100000, 100000),
+(100006, 'Device deactivated by admin', 100001, 100000),
 
 -- Registration events
-(100002, 100007, 'Device registered by admin', 100000, 100000),
-(100002, 100008, 'Device unregistered by admin', 100001, 100000),
+(100007, 'Device registered by admin', 100000, 100000),
+(100008, 'Device unregistered by admin', 100001, 100000),
 
 -- Error events
-(100003, 100009, 'Low battery warning', 100004, 100000),
-(100003, 100010, 'Connection error detected', 100005, 100000),
+(100009, 'Low battery warning', 100004, 100000),
+(100010, 'Connection error detected', 100005, 100000),
 
 -- Notes
-(100004, 100011, 'Regular maintenance completed', 100000, 100000),
-(100004, 100011, 'Battery replaced', 100004, 100000);
+(100011, 'Regular maintenance completed', 100000, 100000),
+(100011, 'Battery replaced', 100004, 100000);
 

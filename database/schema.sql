@@ -2,6 +2,7 @@
 -- There are multiple tables, and views, and below are the explainaitons.
 
 
+
 -- [dbo].[Users], Table. This as the data about users. This does not have external links.
 CREATE TABLE [dbo].[Users] (
     UserID INT NOT NULL IDENTITY(100000,1) PRIMARY KEY,
@@ -66,8 +67,8 @@ CREATE TABLE [dbo].[Functions] (
 CREATE TABLE [dbo].[StateChangeTypes] (
     StateTypeID INT NOT NULL IDENTITY(100000, 1) PRIMARY KEY,
     StateChangeName NVARCHAR(20) NOT NULL,
-    ActionText NVARCHAR(20) NOT NULL,
-    StateSetTo NVARCHAR(20) NOT NULL,
+    ActionText NVARCHAR(30) NOT NULL,
+    StateSetTo NVARCHAR(30) NOT NULL,
     DeviceTypeID INT NOT NULL,
     FunctionID INT NULL,
     FOREIGN KEY (DeviceTypeID) REFERENCES [dbo].[DeviceTypes](DeviceTypeID),
@@ -104,14 +105,14 @@ CREATE TABLE [dbo].[Devices] (
     CreatedDateTime DATETIME NOT NULL DEFAULT GETDATE(),
     CreatedUserID INT NULL,
     LocationID INT NULL,
-    DeviceStatus VARCHAR(8) NULL,
+    DeviceStateID INT NOT NULL,
     PortID INT NULL,
     LockPin INT NULL,
     MacAddress CHAR(17) NULL,
     FOREIGN KEY (CreatedUserID) REFERENCES [dbo].[Users](UserID),
     FOREIGN KEY (LocationID) REFERENCES [dbo].[Locations](LocationID),
     FOREIGN KEY (DeviceTypeID) REFERENCES [dbo].[DeviceTypes](DeviceTypeID),
-    FOREIGN KEY (DeviceStatus) REFERENCES [dbo].[DeviceStates](DeviceStateID)
+    FOREIGN KEY (DeviceStateID) REFERENCES [dbo].[DeviceStates](DeviceStateID)
 );
 
 -- [dbo].[Events] List of all events. 
@@ -124,70 +125,5 @@ CREATE TABLE [dbo].[Events] (
     EventDateTime DATETIME NOT NULL DEFAULT GETDATE(),
     FOREIGN KEY (DeviceID) REFERENCES [dbo].[Devices](DeviceID),
     FOREIGN KEY (CreatedUserID) REFERENCES [dbo].[Users](UserID),
-    FOREIGN KEY (EventTypeID) REFERENCES [dbo].[EventTypes](EventTypeID),
     FOREIGN KEY (EventValueID) REFERENCES [dbo].[EventValues](EventValueID)
 );
-
-
--- Create view for all events with details
-CREATE VIEW [dbo].[vw_AllEvents] AS
-SELECT 
-    e.EventID,
-    e.EventDateTime,
-    et.EventTypeName as EventName,
-    ev.EventValue,
-    ev.EventValueDescription as EventValueDescription,
-    e.EventDescription,
-    d.DeviceName,
-    d.SerialNumber as DeviceSerialNumber,
-    dt.TypeName as DeviceType,
-    l.Name as LocationName,
-    u.UserName as CreatedByUser
-FROM [dbo].[Events] e
-INNER JOIN [dbo].[EventTypes] et ON e.EventTypeID = et.EventTypeID
-INNER JOIN [dbo].[EventValues] ev ON e.EventValueID = ev.EventValueID
-INNER JOIN [dbo].[Users] u ON e.CreatedUserID = u.UserID
-LEFT JOIN [dbo].[Devices] d ON e.DeviceID = d.DeviceID
-LEFT JOIN [dbo].[DeviceTypes] dt ON d.DeviceTypeID = dt.DeviceTypeID
-LEFT JOIN [dbo].[Locations] l ON d.LocationID = l.LocationID
-
-SELECT * FROM [dbo].[vw_AllEvents] ORDER BY EventDateTime DESC;
-
--- view with last occured events for all devices.
-CREATE VIEW [dbo].[vw_LatestEvents] AS
-WITH LatestEvents AS (
-    SELECT 
-        DeviceID,
-        EventID,
-        EventDateTime,
-        ROW_NUMBER() OVER (PARTITION BY DeviceID ORDER BY EventDateTime DESC) as RowNum
-    FROM [dbo].[Events]
-    WHERE DeviceID IS NOT NULL
-)
-SELECT 
-    e.EventID,
-    e.EventDateTime,
-    et.EventTypeName as EventName,
-    ev.EventValue as CurrentStatus,
-    ev.EventValueDescription as EventValueDescription,
-    e.EventDescription,
-    d.DeviceID,
-    d.DeviceName,
-    d.CreatedByUserID as DeviceOwner,
-    d.SerialNumber as DeviceSerialNumber,
-    dt.TypeName as DeviceType,
-    dt.DeviceTypeID as TypeID,
-    l.Name as LocationName,
-    u.UserName as CreatedByUser
-FROM LatestEvents le
-INNER JOIN [dbo].[Events] e ON le.EventID = e.EventID
-INNER JOIN [dbo].[EventTypes] et ON e.EventTypeID = et.EventTypeID
-INNER JOIN [dbo].[EventValues] ev ON e.EventValueID = ev.EventValueID
-INNER JOIN [dbo].[Users] u ON e.CreatedUserID = u.UserID
-LEFT JOIN [dbo].[Devices] d ON e.DeviceID = d.DeviceID
-LEFT JOIN [dbo].[DeviceTypes] dt ON d.DeviceTypeID = dt.DeviceTypeID
-LEFT JOIN [dbo].[Locations] l ON d.LocationID = l.LocationID
-WHERE le.RowNum = 1;
-
-
--- A view that has all the device, where the staus is active. 
