@@ -2,8 +2,15 @@
 INSERT INTO [dbo].[Users] (UserName, Email, FirstName, LastName, NICNumber, Birthday)
 VALUES 
 ('admin', 'admin@example.com', 'System', 'Administrator', 'NIC123456', '1990-01-01'),
-('john', 'john@example.com', 'John', 'Doe', 'NIC789012', '1992-05-15'),
-('jane', 'jane@example.com', 'Jane', 'Smith', 'NIC345678', '1988-08-20');
+('john_doe', 'john@example.com', 'John', 'Doe', 'NIC789012', '1985-05-15'),
+('jane_smith', 'jane@example.com', 'Jane', 'Smith', 'NIC345678', '1992-08-20');
+
+-- Insert user passwords (SHA-256 hashes)
+INSERT INTO [dbo].[UserPasswords] (UserID, PasswordHash, ResetFunctionInput)
+VALUES 
+(100000, '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918', 'reset123'), -- admin/admin
+(100001, '96cae35ce8a9b0244178bf28e4966c2ce1b8385723a96a6b838858cdd6ca0a1e', 'reset456'), -- john/password123
+(100002, 'e6e061838856bf47e1de730719fb2609f2d63561bc7e644e288d6db3e9e53a54', 'reset789'); -- jane/password456
 
 -- Insert device types
 INSERT INTO [dbo].[DeviceTypes] (TypeName, TypeDescription)
@@ -28,181 +35,113 @@ VALUES
 ('REGISTER', 'Register (True/False)'),
 ('NOTE','Text Note');
 
--- Insert state types for DOOR_LOCK
-INSERT INTO [dbo].[StateTypes] (FriendlyName, NameText, StateSetTo, DeviceTypeID, FunctionID)
-VALUES 
-('Locked', 'LOCK', 'LOCKED', 100000, 'FUNC001'),
-('Unlocked', 'UNLOCK', 'UNLOCKED', 100000, 'FUNC002'),
-('Auto-Lock Enabled', 'ENABLED', 'ENABLED', 100000, 'FUNC003'),
-('Auto-Lock Disabled', 'DISABLED', 'DISABLED', 100000, 'FUNC004');
-
--- Insert state types for LIGHT_SWITCH
-INSERT INTO [dbo].[StateTypes] (FriendlyName, NameText, StateSetTo, DeviceTypeID, FunctionID)
-VALUES 
-('LS_ON', 'ON', 'ON', 100001, 'GetLSValue'),
-('LS_OFF', 'OFF', 'OFF', 100001, 'GetLSValue'),
-('LS_DIM_25', '25%', '25%', 100001, 'GetLSValue'),
-('LS_DIM_50', '50%', '50%', 100001, 'GetLSValue'),
-('LS_DIM_75', '75%', '75%'  , 100001, 'GetLSValue'),
-('LS_DIM_100', '90%', '90%', 100001, 'GetLSValue');
-
--- Insert state types for THERMOSTAT
-INSERT INTO [dbo].[StateTypes] (FriendlyName, NameText, StateSetTo, DeviceTypeID, FunctionID)
-VALUES 
-('TH_HEAT', 'HEAT', 'HEAT', 100002, 'GetTHValue'),
-('TH_COOL', 'COOL', 'COOL', 100002, 'GetTHValue'),
-('TH_AUTO', 'AUTO', 'AUTO', 100002, 'GetTHValue'),
-('TH_OFF', 'OFF', 'OFF', 100002, 'GetTHValue'),
-('TH_FAN_ON', 'FAN ON', 'FAN ON', 100002, 'GetTHValue'),
-('TH_FAN_AUTO', 'FAN AUTO', 'FAN AUTO', 100002, 'GetTHValue'),
-('TH_TEMP_20', 'Set to 20', 'Set Temp = 20', 100002, 'GetTHValue'),
-('TH_TEMP_22', 'Set to 22', 'Set Temp = 22', 100002, 'GetTHValue');
-
--- Insert state types for WATER_VALVE
-INSERT INTO [dbo].[StateTypes] (FriendlyName, NameText, StateSetTo, DeviceTypeID, FunctionID)
-VALUES 
-('WV_OPEN', 'OPEN', 'OPEN', 100003, 'GetWVValue'),
-('WV_CLOSED', 'CLOSE', 'CLOSED', 100003, 'GetWVValue'),
-('WV_LEAK', 'LEAK', 'LEAK', 100003, 'GetWVValue');
-
--- Insert state types for GAS_VALVE
-INSERT INTO [dbo].[StateTypes] (FriendlyName, NameText, StateSetTo, DeviceTypeID, FunctionID)
-VALUES 
-('GV_OPEN', 'OPEN', 'OPEN', 100004, 'GetGVValue'),
-('GV_CLOSED', 'CLOSE', 'CLOSED', 100004, 'GetGVValue'),
-('GV_GAS_LEAK', 'GAS_LEAK', 'LEAK', 100004, 'GetGVValue');
-
--- Insert state types for SMOKE_DETECTOR
-INSERT INTO [dbo].[StateTypes] (FriendlyName, NameText, StateSetTo, DeviceTypeID, FunctionID)
-VALUES 
-('SD_DISARMED', 'DISARMED', 'DISARMED', 100005, 'GetSDValue'),
-('SD_ARMED', 'ARMED', 'ARMED', 100005, 'GetSDValue'),
-('SD_SMOKE', 'SMOKE', 'DETECTED', 100005, 'GetSDValue'),
-('SD_NORMAL', 'NORMAL', 'NORMAL', 100005, 'GetSDValue');
-
--- Insert test locations
-INSERT INTO [dbo].[Locations] (Name, StreetAddress, GeoLocation, CreatedByUserID)
-VALUES 
-('Main House', '123 Main Street, City', '6.9271,79.8612', 100000),
-('Garage', '123 Main Street, City', '6.9271,79.8612', 100000),
-('Backyard', '123 Main Street, City', '6.9271,79.8612', 100000),
-('Kitchen', '123 Main Street, City', '6.9271,79.8612', 100000),
-('Living Room', '123 Main Street, City', '6.9271,79.8612', 100000),
-('Bedroom', '123 Main Street, City', '6.9271,79.8612', 100000);
-
--- Insert test devices
-INSERT INTO [dbo].[Devices] (SerialNumber, DeviceName, DeviceDescription, DeviceTypeID, CreatedUserID, LocationID, DeviceStatus, PortID, LockPin, MacAddress)
-VALUES 
--- Door Locks
-('DL001', 'Front Door Lock', 'Main entrance smart lock', 100000, 100000, 100000, 'ACTIVE', 1, 1234, '00:1B:44:11:3A:B7'),
-('DL002', 'Back Door Lock', 'Back entrance smart lock', 100000, 100000, 100000, 'ACTIVE', 2, 5678, '00:1B:44:11:3A:B8'),
-('DL003', 'Garage Door Lock', 'Garage entrance smart lock', 100000, 100000, 100001, 'ACTIVE', 1, 9012, '00:1B:44:11:3A:B9'),
-
--- Light Switches
-('LS001', 'Living Room Light', 'Main living room light switch', 100001, 100000, 100004, 'ACTIVE', 1, 0, '00:1B:44:11:3A:BA'),
-('LS002', 'Kitchen Light', 'Kitchen area light switch', 100001, 100000, 100003, 'ACTIVE', 1, 0, '00:1B:44:11:3A:BB'),
-('LS003', 'Bedroom Light', 'Master bedroom light switch', 100001, 100000, 100005, 'ACTIVE', 1, 0, '00:1B:44:11:3A:BC'),
-
--- Thermostats
-('TH001', 'Main Thermostat', 'Central heating and cooling control', 100002, 100000, 100000, 'ACTIVE', 1, 0, '00:1B:44:11:3A:BD'),
-('TH002', 'Bedroom Thermostat', 'Bedroom temperature control', 100002, 100000, 100005, 'ACTIVE', 1, 0, '00:1B:44:11:3A:BE'),
-
--- Water Valves
-('WV001', 'Main Water Valve', 'Main water supply control', 100003, 100000, 100000, 'ACTIVE', 1, 0, '00:1B:44:11:3A:BF'),
-('WV002', 'Garden Water Valve', 'Garden irrigation control', 100003, 100000, 100002, 'ACTIVE', 1, 0, '00:1B:44:11:3A:C0'),
-
--- Gas Valves
-('GV001', 'Main Gas Valve', 'Main gas supply control', 100004, 100000, 100000, 'ACTIVE', 1, 0, '00:1B:44:11:3A:C1'),
-('GV002', 'Kitchen Gas Valve', 'Kitchen gas supply control', 100004, 100000, 100003, 'ACTIVE', 1, 0, '00:1B:44:11:3A:C2');
-
--- Insert event values
+-- Insert event values for each event type
 INSERT INTO [dbo].[EventValues] (EventValue, EventValueDescription, EventTypeID)
 VALUES 
--- STATE_CHANGE Events (100000)
-('LOCKED', 'Locked', 100000),
-('UNLOCKED', 'Unlocked', 100000),
-('ON', 'On', 100000),
-('OFF', 'Off', 100000),
-('OPEN', 'Open', 100000),
-('CLOSED', 'Closed', 100000),
-('HEAT', 'Heat Mode', 100000),
-('COOL', 'Cool Mode', 100000),
-('AUTO', 'Auto Mode', 100000),
-('25%', 'Dim Level 25%', 100000),
-('50%', 'Dim Level 50%', 100000),
-('75%', 'Dim Level 75%', 100000),
-('90%', 'Dim Level 90%', 100000),
+-- State Change values
+('LOCKED', 'Device is locked', 100000),
+('UNLOCKED', 'Device is unlocked', 100000),
+('OPEN', 'Device is open', 100000),
+('CLOSED', 'Device is closed', 100000),
+('ON', 'Device is turned on', 100000),
+('OFF', 'Device is turned off', 100000),
 
--- ACTIVATE Events (100001)
-('TRUE', 'Activated', 100001),
-('FALSE', 'Deactivated', 100001),
+-- Activate values
+('ACTIVE', 'Device is active', 100001),
+('INACTIVE', 'Device is inactive', 100001),
 
--- ERROR Events (100002)
-('LOCK_JAMMED', 'Lock Jammed', 100002),
-('NO_POWER', 'Power Outage', 100002),
-('BATTERY_LOW', 'Battery Low', 100002),
-('BATTERY_CRITICAL', 'Battery Critical', 100002),
-('LOW_SIGNAL', 'Low Signal', 100002),
-('GAS_LEAK', 'Gas Leak', 100002),
-('WATER_LEAK', 'Water Leak', 100002),
+-- Register values
+('REGISTERED', 'Device is registered', 100002),
+('UNREGISTERED', 'Device is unregistered', 100002),
 
--- REGISTER Events (100003)
-('TRUE', 'Registered', 100003),
-('FALSE', 'Unregistered', 100003),
+-- Error values
+('ERROR_LOW_BATTERY', 'Device battery is low', 100003),
+('ERROR_CONNECTION', 'Device connection error', 100003),
+('ERROR_SENSOR', 'Device sensor error', 100003),
 
--- NOTE Events (100004)
-('USER_LOGIN', 'User Login', 100004),
-('USER_LOGOUT', 'User Logout', 100004),
-('USER_ADD', 'User Added', 100004),
-('USER_DELETE', 'User Deleted', 100004),
-('USER_UPDATE', 'User Updated', 100004),
-('USER_RESET_PASSWORD', 'User Reset Password', 100004),
-('USER_FORGOT_PASSWORD', 'User Forgot Password', 100004);
+-- Note values (custom text)
+('NOTE', 'User note', 100004);
 
--- Insert test events
+-- Insert functions
+INSERT INTO [dbo].[Functions] (FunctionName, FunctionDescription, InputCount)
+VALUES 
+('LOCK_DOOR', 'Lock a door device', 1),
+('UNLOCK_DOOR', 'Unlock a door device', 1),
+('OPEN_VALVE', 'Open a valve device', 1),
+('CLOSE_VALVE', 'Close a valve device', 1),
+('ENABLE_DEVICE', 'Enable a device', 1),
+('DISABLE_DEVICE', 'Disable a device', 1);
+
+-- Insert state change types for each device type
+INSERT INTO [dbo].[StateChangeTypes] (StateChangeName, ActionText, StateSetTo, DeviceTypeID, FunctionID)
+VALUES 
+-- Door Lock states
+('LOCK', 'Lock Door', 'LOCKED', 100000, 100000),
+('UNLOCK', 'Unlock Door', 'UNLOCKED', 100000, 100001),
+
+-- Gas Valve states
+('OPEN', 'Open Gas Valve', 'OPEN', 100001, 100002),
+('CLOSE', 'Close Gas Valve', 'CLOSED', 100001, 100003),
+
+-- Water Valve states
+('OPEN', 'Open Water Valve', 'OPEN', 100002, 100002),
+('CLOSE', 'Close Water Valve', 'CLOSED', 100002, 100003),
+
+-- Smoke Detector states
+('ENABLE', 'Enable Smoke Detector', 'ON', 100003, 100004),
+('DISABLE', 'Disable Smoke Detector', 'OFF', 100003, 100005);
+
+-- Insert locations
+INSERT INTO [dbo].[Locations] (Name, StreetAddress, GeoLocation, CreatedByUserID)
+VALUES 
+('Home', '123 Main St, City', '6.9271,79.8612', 100000),
+('Office', '456 Business Ave, City', '6.9271,79.8612', 100000),
+('Garage', '789 Parking Rd, City', '6.9271,79.8612', 100000);
+
+-- Insert device states
+INSERT INTO [dbo].[DeviceStates] (StateName, StateDescription)
+VALUES 
+('PENDING', 'Device is pending registration'),
+('REGISTERED', 'Device is registered but not active'),
+('ACTIVE', 'Device is active and operational'),
+('DEACTIVATED', 'Device is temporarily deactivated'),
+('REJECTED', 'Device registration was rejected');
+
+-- Insert devices
+INSERT INTO [dbo].[Devices] (SerialNumber, DeviceTypeID, DeviceName, DeviceDescription, CreatedUserID, LocationID, DeviceStatus, PortID, LockPin, MacAddress)
+VALUES 
+('DL001', 100000, 'Front Door', 'Main entrance door lock', 100000, 100000, 'ACTIVE', 1, 1234, '00:11:22:33:44:55'),
+('DL002', 100000, 'Back Door', 'Back entrance door lock', 100000, 100000, 'ACTIVE', 2, 5678, '00:11:22:33:44:66'),
+('GV001', 100001, 'Main Gas Valve', 'Main gas supply valve', 100000, 100000, 'ACTIVE', 3, NULL, '00:11:22:33:44:77'),
+('WV001', 100002, 'Main Water Valve', 'Main water supply valve', 100000, 100000, 'ACTIVE', 4, NULL, '00:11:22:33:44:88'),
+('SD001', 100003, 'Kitchen Smoke Detector', 'Kitchen area smoke detector', 100000, 100000, 'ACTIVE', 5, NULL, '00:11:22:33:44:99'),
+('MS001', 100004, 'Living Room Motion', 'Living room motion sensor', 100000, 100000, 'ACTIVE', 6, NULL, '00:11:22:33:44:AA'),
+('SC001', 100005, 'Front Camera', 'Front door security camera', 100000, 100000, 'ACTIVE', 7, NULL, '00:11:22:33:44:BB'),
+('DS001', 100006, 'Garage Door Sensor', 'Garage door magnetic sensor', 100000, 100001, 'ACTIVE', 8, NULL, '00:11:22:33:44:CC'),
+('GD001', 100007, 'Garage Door', 'Garage door controller', 100000, 100001, 'ACTIVE', 9, 9012, '00:11:22:33:44:DD');
+
+-- Insert events
 INSERT INTO [dbo].[Events] (EventTypeID, EventValueID, EventDescription, DeviceID, CreatedUserID)
 VALUES 
--- Door Lock State Changes
-(100000, 100000, 'Front door locked by admin', 100000, 100000),
-(100000, 100001, 'Front door unlocked by john', 100000, 100001),
-(100000, 100000, 'Back door locked by system', 100001, 100000),
-(100000, 100001, 'Back door unlocked by jane', 100001, 100002),
+-- State changes
+(100000, 100000, 'Door locked by admin', 100000, 100000),
+(100000, 100001, 'Door unlocked by admin', 100000, 100000),
+(100000, 100002, 'Gas valve opened by admin', 100002, 100000),
+(100000, 100003, 'Water valve closed by admin', 100003, 100000),
 
--- Light Switch State Changes
-(100000, 100002, 'Living room light turned on by admin', 100003, 100000),
-(100000, 100003, 'Living room light turned off by john', 100003, 100001),
-(100000, 100002, 'Kitchen light turned on by jane', 100004, 100002),
-(100000, 100010, 'Kitchen light dimmed to 25%', 100004, 100002),
+-- Activation events
+(100001, 100005, 'Device activated by admin', 100000, 100000),
+(100001, 100006, 'Device deactivated by admin', 100001, 100000),
 
--- Thermostat State Changes
-(100000, 100006, 'Main thermostat set to heat mode', 100006, 100000),
-(100000, 100007, 'Main thermostat set to cool mode', 100006, 100000),
-(100000, 100008, 'Main thermostat set to auto mode', 100006, 100000),
-(100000, 100007, 'Bedroom thermostat set to cool mode', 100007, 100001),
+-- Registration events
+(100002, 100007, 'Device registered by admin', 100000, 100000),
+(100002, 100008, 'Device unregistered by admin', 100001, 100000),
 
--- Water Valve State Changes
-(100000, 100004, 'Main water valve opened by admin', 100008, 100000),
-(100000, 100005, 'Main water valve closed by system', 100008, 100000),
-(100000, 100004, 'Garden water valve opened for irrigation', 100009, 100000),
-(100000, 100005, 'Garden water valve closed after irrigation', 100009, 100000),
+-- Error events
+(100003, 100009, 'Low battery warning', 100004, 100000),
+(100003, 100010, 'Connection error detected', 100005, 100000),
 
--- Error Events
-(100002, 100012, 'Front door lock jammed', 100000, 100000),
-(100002, 100013, 'Main thermostat power outage', 100006, 100000),
-(100002, 100014, 'Back door lock battery low', 100001, 100000),
-(100002, 100016, 'Kitchen gas valve leak detected', 100011, 100002),
-(100002, 100017, 'Main water valve leak detected', 100008, 100000),
-
--- Activate Events
-(100001, 100011, 'Main thermostat activated', 100006, 100000),
-(100001, 100012, 'Bedroom thermostat deactivated', 100007, 100001),
-
--- Register Events
-(100003, 100018, 'New device registered: Front Door Lock', 100000, 100000),
-(100003, 100019, 'Device unregistered: Back Door Lock', 100001, 100000),
-
--- Note Events
-(100004, 100020, 'User login: admin', 100000, 100000),
-(100004, 100021, 'User logout: john', 100000, 100001),
-(100004, 100026, 'User password reset: jane', 100000, 100002);
+-- Notes
+(100004, 100011, 'Regular maintenance completed', 100000, 100000),
+(100004, 100011, 'Battery replaced', 100004, 100000);
 
