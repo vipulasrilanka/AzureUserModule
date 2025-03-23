@@ -15,12 +15,12 @@ VALUES
 -- Insert device types
 INSERT INTO [dbo].[DeviceTypes] (TypeName, TypeDescription)
 VALUES 
-('DOOR_LOCK', 'Smart Door Lock - Electronic lock with keypad and mobile app control'),
-('LIGHT_SWITCH', 'Smart Light Switch - WiFi-enabled light switch with dimming'),
-('THERMOSTAT', 'Smart Thermostat - Temperature control with scheduling'),
-('WATER_VALVE', 'Smart Water Valve - Remote water flow control'),
+('DOOR_LOCK', 'Smart Door Lock - Electronic lock with keypad and mobile app control'), --100000
+('LIGHT_SWITCH', 'Smart Light Switch - WiFi-enabled light switch with dimming'), --100001
+('THERMOSTAT', 'Smart Thermostat - Temperature control with scheduling'), --100002
+('WATER_VALVE', 'Smart Water Valve - Remote water flow control'), --100003
 ('GAS_VALVE', 'Smart Gas Valve - Remote gas flow control'),
-('SMOKE_DETECTOR', 'Smart Smoke Detector - Connected smoke and carbon monoxide detector'),
+('SMOKE_DETECTOR', 'Smart Smoke Detector - Connected smoke and carbon monoxide detector'), ---100004
 ('MOTION_SENSOR', 'Motion Sensor - Wireless motion detection'),
 ('CAMERA', 'Security Camera - IP camera with motion detection'),
 ('DOOR_SENSOR', 'Door Sensor - Magnetic contact sensor for doors and windows'),
@@ -29,17 +29,17 @@ VALUES
 -- Insert event types
 INSERT INTO [dbo].[EventTypes] (EventTypeName, EventTypeDescription)
 VALUES 
-('STATE_CHANGE', 'Device State Change'),
-('ACTIVATE', 'Activate (True/False)'),
-('ERROR', 'Error Condition'),
-('REGISTER', 'Register (True/False)'),
-('NOTE','Text Note');
+('STATE_CHANGE', 'Device State Change'), --100000
+('ACTIVATE', 'Activate (True/False)'), --100001
+('REGISTER', 'Register (True/False)'), --100002
+('ERROR', 'Error Condition'), --100003
+('NOTE','Text Note'); --100004
 
 -- Insert event values for each event type
 INSERT INTO [dbo].[EventValues] (EventValue, EventValueDescription, EventTypeID)
 VALUES 
 -- State Change values
-('LOCKED', 'Device is locked', 100000),
+('LOCKED', 'Device is locked', 100000), -- 100000
 ('UNLOCKED', 'Device is unlocked', 100000),
 ('OPEN', 'Device is open', 100000),
 ('CLOSED', 'Device is closed', 100000),
@@ -47,20 +47,21 @@ VALUES
 ('OFF', 'Device is turned off', 100000),
 
 -- Activate values
-('ACTIVE', 'Device is active', 100001),
+('ACTIVATED', 'Device is active', 100001), --100006
+('DEACTIVATED', 'Device is deactivated', 100001),
 ('INACTIVE', 'Device is inactive', 100001),
 
 -- Register values
-('REGISTERED', 'Device is registered', 100002),
+('REGISTERED', 'Device is registered', 100002), --100009
 ('UNREGISTERED', 'Device is unregistered', 100002),
 
 -- Error values
-('ERROR_LOW_BATTERY', 'Device battery is low', 100003),
+('ERROR_LOW_BATTERY', 'Device battery is low', 100003), --100011
 ('ERROR_CONNECTION', 'Device connection error', 100003),
 ('ERROR_SENSOR', 'Device sensor error', 100003),
 
 -- Note values (custom text)
-('NOTE', 'User note', 100004);
+('NOTE', 'User note', 100004); --100014
 
 -- Insert functions
 INSERT INTO [dbo].[Functions] (FunctionName, FunctionDescription, InputCount)
@@ -110,37 +111,39 @@ VALUES
 -- Insert devices
 INSERT INTO [dbo].[Devices] (SerialNumber, DeviceTypeID, DeviceName, DeviceDescription, CreatedUserID, LocationID, DeviceStateID, PortID, LockPin, MacAddress)
 VALUES 
-('DL001', 100000, 'Front Door', 'Main entrance door lock', 100000, 100000, 100003, 1, 1234, '00:11:22:33:44:55'),
-('DL002', 100000, 'Back Door', 'Back entrance door lock', 100000, 100000, 100003, 2, 5678, '00:11:22:33:44:66'),
-('GV001', 100001, 'Main Gas Valve', 'Main gas supply valve', 100000, 100000, 100003, 3, NULL, '00:11:22:33:44:77'),
-('WV001', 100002, 'Main Water Valve', 'Main water supply valve', 100000, 100000, 100003, 4, NULL, '00:11:22:33:44:88'),
-('SD001', 100003, 'Kitchen Smoke Detector', 'Kitchen area smoke detector', 100000, 100000, 100003, 5, NULL, '00:11:22:33:44:99'),
-('MS001', 100004, 'Living Room Motion', 'Living room motion sensor', 100000, 100000, 100003, 6, NULL, '00:11:22:33:44:AA'),
-('SC001', 100005, 'Front Camera', 'Front door security camera', 100000, 100000, 100003, 7, NULL, '00:11:22:33:44:BB'),
-('DS001', 100006, 'Garage Door Sensor', 'Garage door magnetic sensor', 100000, 100001, 100003, 8, NULL, '00:11:22:33:44:CC'),
-('GD001', 100007, 'Garage Door', 'Garage door controller', 100000, 100001, 100003, 9, 9012, '00:11:22:33:44:DD');
+('DL001', 100000, 'Front Door', 'Main entrance door lock', 100000, 100000, 100002, 1, 1234, '00:11:22:33:44:55'),
+('DL002', 100000, 'Back Door', 'Back entrance door lock', 100000, 100000, 100002, 2, 5678, '00:11:22:33:44:66'),
+('GV001', 100004, 'Main Gas Valve', 'Main gas supply valve', 100000, 100000, 100002, 3, NULL, '00:11:22:33:44:77'),
+('WV001', 100003, 'Main Water Valve', 'Main water supply valve', 100000, 100000, 100003, 4, NULL, '00:11:22:33:44:88'),
+('SD001', 100005, 'Kitchen Smoke Detector', 'Kitchen area smoke detector', 100000, 100000, 100003, 5, NULL, '00:11:22:33:44:99'),
+('MS001', 100006, 'Living Room Motion', 'Living room motion sensor', 100000, 100000, 100000, 6, NULL, '00:11:22:33:44:AA'),
+('SC001', 100007, 'Front Camera', 'Front door security camera', 100000, 100000, 100000, 7, NULL, '00:11:22:33:44:BB'),
+('DS001', 100008, 'Garage Door Sensor', 'Garage door magnetic sensor', 100000, 100000, 100003, 8, NULL, '00:11:22:33:44:CC'),
+('GD001', 100009, 'Garage Door', 'Garage door controller', 100000, 100001, 100000, 9, 9012, '00:11:22:33:44:DD');
 -- Insert events
 INSERT INTO [dbo].[Events] (EventValueID, EventDescription, DeviceID, CreatedUserID)
 VALUES 
 -- State changes
+-- Registration, Activation and control device 100000 - Main entrance door lock
+(100009, 'Device registered by admin', 100000, 100000),
+(100006, 'Device activated by admin', 100000, 100000),
 (100000, 'Door locked by admin', 100000, 100000),
 (100001, 'Door unlocked by admin', 100000, 100000),
+--Gas Valve
+(100009, 'Device registered by admin', 100002, 100000),
+(100006, 'Device activated by admin', 100002, 100000),
 (100002, 'Gas valve opened by admin', 100002, 100000),
+
+--Water Valve close and deavtivate (Main Water Valve)
 (100003, 'Water valve closed by admin', 100003, 100000),
+(100007, 'Device deactivated by admin', 100003, 100000),
 
--- Activation events
-(100005, 'Device activated by admin', 100000, 100000),
-(100006, 'Device deactivated by admin', 100001, 100000),
+-- Error and unregistration event - 100004 (Kitchen Smoke Detector)
+(100011, 'Low battery warning', 100004, 100000),
+(100012, 'Connection error detected', 100004, 100000),
+(100010, 'Device unregistered by admin', 100004, 100000),
 
--- Registration events
-(100007, 'Device registered by admin', 100000, 100000),
-(100008, 'Device unregistered by admin', 100001, 100000),
-
--- Error events
-(100009, 'Low battery warning', 100004, 100000),
-(100010, 'Connection error detected', 100005, 100000),
-
--- Notes
-(100011, 'Regular maintenance completed', 100000, 100000),
-(100011, 'Battery replaced', 100004, 100000);
+-- Notes (Living Room Motion)
+(100014, 'Regular maintenance completed', 100005, 100000),
+(100014, 'Battery replaced', 100005, 100000);
 
