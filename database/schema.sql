@@ -69,7 +69,6 @@ CREATE TABLE [dbo].[Devices] (
 
 CREATE TABLE [dbo].[Events] (
     EventID INT NOT NULL IDENTITY(100000,1) PRIMARY KEY,
-    EventTypeID INT NOT NULL,
     EventValueID INT NOT NULL,
     EventDescription NVARCHAR(MAX) NULL,
     DeviceID INT NULL,
@@ -81,43 +80,6 @@ CREATE TABLE [dbo].[Events] (
     FOREIGN KEY (EventValueID) REFERENCES [dbo].[EventValues](EventValueID)
 );
 
-CREATE TABLE [dbo].[DeviceStates] (
-    DeviceStateID INT NOT NULL IDENTITY(100000, 1) PRIMARY KEY,
-    DeviceID INT NOT NULL,
-    StateValue NVARCHAR(20) NOT NULL,
-    StateDescription NVARCHAR(MAX) NOT NULL,
-    FOREIGN KEY (DeviceID) REFERENCES [dbo].[Devices](DeviceID),
-);
-
--- Create view for devices with last ON status
-CREATE VIEW [dbo].[vw_DevicesLastOffStatus] AS
-WITH LastEvents AS (
-    SELECT 
-        DeviceID,
-        EventValueID,
-        EventDateTime,
-        ROW_NUMBER() OVER (PARTITION BY DeviceID ORDER BY EventDateTime DESC) as RowNum
-    FROM [dbo].[Events]
-)
-SELECT 
-    d.DeviceID,
-    d.SerialNumber,
-    d.DeviceName,
-    d.DeviceDescription,
-    dt.TypeName as DeviceType,
-    l.Name as LocationName,
-    d.DeviceStatus,
-    ev.EventValue as LastEventValue,
-    e.EventDateTime as LastEventTime,
-    u.UserName as LastEventUser
-FROM [dbo].[Devices] d
-INNER JOIN [dbo].[DeviceTypes] dt ON d.DeviceTypeID = dt.DeviceTypeID
-INNER JOIN [dbo].[Locations] l ON d.LocationID = l.LocationID
-LEFT JOIN LastEvents le ON d.DeviceID = le.DeviceID AND le.RowNum = 1
-LEFT JOIN [dbo].[Events] e ON le.DeviceID = e.DeviceID AND le.EventDateTime = e.EventDateTime
-LEFT JOIN [dbo].[EventValues] ev ON e.EventValueID = ev.EventValueID
-LEFT JOIN [dbo].[Users] u ON e.CreatedUserID = u.UserID
-WHERE ev.EventValue = 'OFF';
 
 -- Create view for all events with details
 CREATE VIEW [dbo].[vw_AllEvents] AS
@@ -177,76 +139,3 @@ LEFT JOIN [dbo].[Devices] d ON e.DeviceID = d.DeviceID
 LEFT JOIN [dbo].[DeviceTypes] dt ON d.DeviceTypeID = dt.DeviceTypeID
 LEFT JOIN [dbo].[Locations] l ON d.LocationID = l.LocationID
 WHERE le.RowNum = 1;
-
--- Query for Sand Dance visualization
-SELECT 
-    -- Users table
-    u.UserID,
-    u.UserName,
-    u.Email,
-    u.FirstName,
-    u.LastName,
-    u.NICNumber,
-    u.Birthday,
-    u.CreatedDateTime as UserCreatedDate,
-    
-    -- Locations table
-    l.LocationID,
-    l.Name as LocationName,
-    l.StreetAddress,
-    l.GeoLocation,
-    l.CreatedDateTime as LocationCreatedDate,
-    
-    -- DeviceTypes table
-    dt.DeviceTypeID,
-    dt.TypeName as DeviceTypeName,
-    dt.TypeDescription as DeviceTypeDescription,
-    
-    -- Devices table
-    d.DeviceID,
-    d.SerialNumber,
-    d.DeviceName,
-    d.DeviceDescription,
-    d.CreatedDateTime as DeviceCreatedDate,
-    d.DeviceStatus,
-    d.PortID,
-    d.LockPin,
-    d.MacAddress,
-    
-    -- EventTypes table
-    et.EventTypeID,
-    et.EventTypeName,
-    et.EventTypeDescription,
-    
-    -- EventValues table
-    ev.EventValueID,
-    ev.EventValue,
-    ev.EventValueDescription,
-    
-    -- Events table
-    e.EventID,
-    e.EventDateTime,
-    e.EventDescription as EventDescription,
-    
-    -- StateTypes table
-    st.StateTypeID,
-    st.FriendlyName as StateName,
-    st.NameText as StateText,
-    st.StateSetTo,
-    st.FunctionID,
-    
-    -- DeviceStates table
-    ds.DeviceStateID,
-    ds.StateValue,
-    ds.StateDescription
-
-FROM [dbo].[Users] u
-INNER JOIN [dbo].[Locations] l ON u.UserID = l.CreatedByUserID
-INNER JOIN [dbo].[Devices] d ON u.UserID = d.CreatedUserID
-INNER JOIN [dbo].[DeviceTypes] dt ON d.DeviceTypeID = dt.DeviceTypeID
-INNER JOIN [dbo].[Events] e ON d.DeviceID = e.DeviceID
-INNER JOIN [dbo].[EventTypes] et ON e.EventTypeID = et.EventTypeID
-INNER JOIN [dbo].[EventValues] ev ON e.EventValueID = ev.EventValueID
-INNER JOIN [dbo].[StateTypes] st ON dt.DeviceTypeID = st.DeviceTypeID
-LEFT JOIN [dbo].[DeviceStates] ds ON d.DeviceID = ds.DeviceID
-ORDER BY e.EventDateTime DESC;
