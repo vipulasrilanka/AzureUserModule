@@ -38,14 +38,23 @@ async function getDevicesFromDB(pool, CreatedUserID, DeviceID) {
     addLog(`Fetching devices for UserID: ${CreatedUserID}, DeviceID: ${DeviceID || 'all'}`);
     
     let query = `
-        SELECT 
-            DeviceID,
-            DeviceName,
-            DeviceType,
-            DeviceOwner,
-            CurrentStatus
-        FROM [dbo].[vw_LatestEvents]
-        WHERE DeviceOwner = @CreatedUserID
+    SELECT 
+        DeviceID,
+        DeviceName,
+        SerialNumber,
+        DeviceTypeID,
+        TypeName as DeviceType,
+        CreatedUserID,
+        CreatedByUserName,
+        DeviceStateID,
+        DeviceState,
+        LastEventID,
+        LastEventValueID,
+        LastEventValue,
+        LastEventTypeID,
+        LastEventTypeName
+    FROM [dbo].[vw_deviceState]
+    WHERE CreatedUserID = @CreatedUserID
     `;
 
     if (DeviceID) {
@@ -76,13 +85,13 @@ async function getStatesFromDB(pool, deviceTypes) {
     const params = deviceTypes.map((_, index) => `@type${index}`);
     const query = `
         SELECT 
-            st.StateTypeID as UniqueID,
-            CONCAT(st.DeviceTypeID, '_', st.StateSetTo) as StateID,
-            st.FriendlyName as StateName,
+            st.StateTypeID,
+            st.ActionText as StateName,
             st.StateSetTo,
+            st.DeviceTypeID,
             dt.TypeName as DeviceType,
             st.FunctionID
-        FROM [dbo].[StateTypes] st
+        FROM [dbo].[StateChangeTypes] st
         INNER JOIN [dbo].[DeviceTypes] dt ON st.DeviceTypeID = dt.DeviceTypeID
         WHERE dt.TypeName IN (${params.join(',')})
     `;
@@ -132,7 +141,6 @@ module.exports = async function (context, req) {
         return;
     }
 
-
     try {
         // Create connection pool
         context.log("await sql.connect(config)", config);
@@ -163,13 +171,46 @@ module.exports = async function (context, req) {
         // Get applicable states from database
         const applicableStates = await getStatesFromDB(pool, deviceTypes);
 
-        // Return the filtered devices and applicable states
+        // Transform the results to match the expected format
+        const devices = userDevices.map(device => ({
+            DeviceID: device.DeviceID,
+            DeviceName: device.DeviceName,
+            DeviceType: device.DeviceType,
+            Status: device.DeviceState,  // Map DeviceState to Status for frontend
+            // Keep other fields for potential future use
+            SerialNumber: device.SerialNumber,
+            DeviceTypeID: device.DeviceTypeID,
+            CreatedUserID: device.CreatedUserID,
+            CreatedByUserName: device.CreatedByUserName,
+            DeviceStateID: device.DeviceStateID,
+            LastEvent: {
+                EventID: device.LastEventID,
+                EventValueID: device.LastEventValueID,
+                EventValue: device.LastEventValue,
+                EventTypeID: device.LastEventTypeID,
+                EventTypeName: device.LastEventTypeName
+            }
+        }));
+
+        // Transform states to match frontend expectations
+        const transformedStates = applicableStates.map(state => ({
+            StateID: state.StateTypeID,  // Map StateTypeID to StateID for frontend
+            StateName: state.StateName,
+            DeviceType: state.DeviceType,
+            // Keep other fields for potential future use
+            StateSetTo: state.StateSetTo,
+            DeviceTypeID: state.DeviceTypeID,
+            FunctionID: state.FunctionID
+        }));
+
+        // Return the transformed devices and states
         context.res = {
             status: 200,
             body: {
-                devices: userDevices,
-                count: userDevices.length,
-                states: applicableStates
+                devices: devices,
+                count: devices.length,
+                states: transformedStates,
+                log: getLog()
             }
         };
 
