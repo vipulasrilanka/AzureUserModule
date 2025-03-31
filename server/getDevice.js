@@ -38,15 +38,25 @@ async function getDevicesFromDB(pool, CreatedUserID, DeviceID) {
     addLog(`Fetching devices for UserID: ${CreatedUserID}, DeviceID: ${DeviceID || 'all'}`);
     
     let query = `
-        SELECT 
-            DeviceID,
-            DeviceName,
-            DeviceType,
-            DeviceOwner,
-            CurrentStatus
-        FROM [dbo].[vw_LatestEvents]
-        WHERE DeviceOwner = @CreatedUserID
-    `;
+    SELECT 
+        DeviceID,
+        DeviceName,
+        SerialNumber,
+        DeviceTypeID,
+        TypeName as DeviceType,
+        CreatedUserID,
+        CreatedByUserName,
+        DeviceStateID,
+        DeviceState,
+        LastEventID,
+        LastEventValueID,
+        LastEventValue,
+        LastEventTypeID,
+        LastEventTypeName
+    FROM [dbo].[vw_deviceState]
+    WHERE CreatedUserID = @CreatedUserID
+`   ;
+
 
     if (DeviceID) {
         query += ' AND DeviceID = @DeviceID';
@@ -76,13 +86,13 @@ async function getStatesFromDB(pool, deviceTypes) {
     const params = deviceTypes.map((_, index) => `@type${index}`);
     const query = `
         SELECT 
-            st.StateTypeID as UniqueID,
-            CONCAT(st.DeviceTypeID, '_', st.StateSetTo) as StateID,
-            st.FriendlyName as StateName,
+            st.StateTypeID
+            st.ActionText as StateName,
             st.StateSetTo,
+            st.DeviceTypeID,
             dt.TypeName as DeviceType,
             st.FunctionID
-        FROM [dbo].[StateTypes] st
+        FROM [dbo].[StateChangeTypes] st
         INNER JOIN [dbo].[DeviceTypes] dt ON st.DeviceTypeID = dt.DeviceTypeID
         WHERE dt.TypeName IN (${params.join(',')})
     `;
