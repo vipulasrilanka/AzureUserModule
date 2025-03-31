@@ -1,182 +1,229 @@
+const sql = require('mssql');
+
+const config = {
+    user: process.env.USER_FUNCTION_DB_USER,
+    password: process.env.USER_FUNCTION_DB_PASSWORD,
+    server: process.env.USER_FUNCTION_DB_SERVER,
+    database: process.env.USER_FUNCTION_DB_NAME,
+    options: {
+        encrypt: true,
+        trustServerCertificate: false
+    }
+};
+
+const MAX_RETRIES = 3;  // Number of retries
+const RETRY_DELAY = 5000;  // Delay between retries in milliseconds (5 seconds)
+const TIME_MATCH_THRESHOLD = 2;
+
 // Azure Function endpoint
 // Static token from userLogin.js
 const VALID_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ";
 
-// Static state data following the schema from statedb.json
-const staticStates = [
-    // Switch-bi-stable states (ON/OFF)
-    { UniqueID: 1, StateID: "SWB__ON", StateName: "ON", StateSetTo: "ON", DeviceType: "Switch-bi-stable", FunctionID: null },
-    { UniqueID: 2, StateID: "SWB_OFF", StateName: "OFF", StateSetTo: "OFF", DeviceType: "Switch-bi-stable", FunctionID: null },
+const timestamp = new Date().toISOString();
+var logText = `[${timestamp}][INIT] OK `;
+
+function addLog(logMessage, level = 'INFO') {
+    const timestamp = new Date().toISOString();
+    logText = logText + `,[${timestamp}][${level}] ${logMessage}`; 
+}
+
+function getLog() {
+    const currentLog = logText;
+    const newTimestamp = new Date().toISOString();
+    logText = `[${newTimestamp}][INIT] OK `;
+    return currentLog;
+}
+
+async function getDevicesFromDB(pool, CreatedUserID, DeviceID) {
+    addLog(`Fetching devices for UserID: ${CreatedUserID}, DeviceID: ${DeviceID || 'all'}`);
     
-    // Temperature-control states
-    { UniqueID: 3, StateID: "TMP_022", StateName: "22", StateSetTo: "T=22", DeviceType: "Temperature-control", FunctionID: null },
-    { UniqueID: 4, StateID: "TMP_023", StateName: "23", StateSetTo: "T=23", DeviceType: "Temperature-control", FunctionID: null },
-    { UniqueID: 5, StateID: "TMP_024", StateName: "24", StateSetTo: "T=24", DeviceType: "Temperature-control", FunctionID: null },
-    { UniqueID: 6, StateID: "TMP_025", StateName: "25", StateSetTo: "T=25", DeviceType: "Temperature-control", FunctionID: null },
-    { UniqueID: 7, StateID: "TMP_OFF", StateName: "OFF", StateSetTo: "OFF", DeviceType: "Temperature-control", FunctionID: null },
+    let query = `
+    SELECT 
+        DeviceID,
+        DeviceName,
+        SerialNumber,
+        DeviceTypeID,
+        TypeName as DeviceType,
+        CreatedUserID,
+        CreatedByUserName,
+        DeviceStateID,
+        DeviceState,
+        LastEventID,
+        LastEventValueID,
+        LastEventValue,
+        LastEventTypeID,
+        LastEventTypeName
+    FROM [dbo].[vw_deviceState]
+    WHERE CreatedUserID = @CreatedUserID
+    `;
 
-    { UniqueID: 8, StateID: "LCK__ON", StateName: "LOCK", StateSetTo: "LOCKED", DeviceType: "Lock-bi-stable", FunctionID: null },
-    { UniqueID: 9, StateID: "LCK_OFF", StateName: "OPEN", StateSetTo: "OPEN", DeviceType: "Lock-bi-stable", FunctionID: null },
-
-    { UniqueID: 8, StateID: "LCH__ON", StateName: "AUTO", StateSetTo: "WAITING", DeviceType: "Lock-Self-Latch", FunctionID: null },
-    { UniqueID: 9, StateID: "LCH_REL", StateName: "RELEASE", StateSetTo: "OPEN", DeviceType: "Lock-Self-Latch", FunctionID: null }
-
-];
-
-// Static device data following the schema from Query 1.json
-const staticDevices = [
-    {
-        UniqueID: 1,
-        DeviceID: "DEV001",
-        DeviceName: "Main Door",
-        DeviceDescription: "Main entrance door lock",
-        DeviceType: "Lock-bi-stable",
-        CreatedDate: "2024-03-18T10:00:00",
-        CreatedUserID: "admin",
-        LocationCode: "LOC001",
-        Status: "LOCKED",
-        PortID: 1,
-        LockPin: 1234,
-        MacAddress: "00:11:22:3C:B4:BE"
-    },
-    {
-        UniqueID: 2,
-        DeviceID: "DEV002",
-        DeviceName: "Garage Gate",
-        DeviceDescription: "Garage entrance gate",
-        DeviceType: "Lock-bi-stable",
-        CreatedDate: "2024-03-18T10:01:00",
-        CreatedUserID: "admin",
-        LocationCode: "LOC002",
-        Status: "OPEN",
-        PortID: 2,
-        LockPin: 5678,
-        MacAddress: "00:F1:22:D3:44:66"
-    },
-    {
-        UniqueID: 3,
-        DeviceID: "DEV003",
-        DeviceName: "Bedroom AC",
-        DeviceDescription: "Bedroom air conditioner",
-        DeviceType: "Temperature-control",
-        CreatedDate: "2024-03-18T10:02:00",
-        CreatedUserID: "admin",
-        LocationCode: "LOC003",
-        Status: "T=23",
-        PortID: 3,
-        LockPin: null,
-        MacAddress: "00:11:2D:33:4F:77"
-    },
-    {
-        UniqueID: 4,
-        DeviceID: "DEV004",
-        DeviceName: "Garden Light",
-        DeviceDescription: "Garden area lighting",
-        DeviceType: "Switch-bi-stable",
-        CreatedDate: "2024-03-18T10:03:00",
-        CreatedUserID: "admin",
-        LocationCode: "LOC004",
-        Status: "OFF",
-        PortID: 4,
-        LockPin: null,
-        MacAddress: "00:11:A2:33:44:88"
-    },
-    {
-        UniqueID: 5,
-        DeviceID: "DEV005",
-        DeviceName: "Letter Box",
-        DeviceDescription: "Auto Letter Box",
-        DeviceType: "Lock-Self-Latch",
-        CreatedDate: "2024-03-18T10:01:00",
-        CreatedUserID: "admin",
-        LocationCode: "LOC002",
-        Status: "LOCKED",
-        PortID: 2,
-        LockPin: 5678,
-        MacAddress: "00:11:22:A3:44:DF"
+    if (DeviceID) {
+        query += ' AND DeviceID = @DeviceID';
     }
-];
+
+    const request = pool.request()
+        .input('CreatedUserID', sql.Int, CreatedUserID);
+
+    if (DeviceID) {
+        request.input('DeviceID', sql.Int, DeviceID);
+    }
+
+    const result = await request.query(query);
+    addLog(`Found ${result.recordset.length} devices`);
+    return result.recordset;
+}
+
+async function getStatesFromDB(pool, deviceTypes) {
+    addLog(`Fetching states for device types: ${deviceTypes.join(', ')}`);
+
+    if (!deviceTypes || deviceTypes.length === 0) {
+        addLog('No device types provided, returning empty states array', 'WARN');
+        return [];
+    }
+
+    // Create a comma-separated list of parameters
+    const params = deviceTypes.map((_, index) => `@type${index}`);
+    const query = `
+        SELECT 
+            st.StateTypeID,
+            st.ActionText as StateName,
+            st.StateSetTo,
+            st.DeviceTypeID,
+            dt.TypeName as DeviceType,
+            st.FunctionID
+        FROM [dbo].[StateChangeTypes] st
+        INNER JOIN [dbo].[DeviceTypes] dt ON st.DeviceTypeID = dt.DeviceTypeID
+        WHERE dt.TypeName IN (${params.join(',')})
+    `;
+
+    const request = pool.request();
+    deviceTypes.forEach((type, index) => {
+        request.input(`type${index}`, sql.NVarChar, type);
+    });
+
+    const result = await request.query(query);
+    addLog(`Found ${result.recordset.length} states`);
+    return result.recordset;
+}
 
 module.exports = async function (context, req) {
     context.log('JavaScript HTTP trigger function processed a request.');
+    context.log('req = ', req);
 
     // Check for required fields
     if (!req.body || !req.body.CreatedUserID || !req.body.SessionToken) {
+        addLog('Missing required fields', 'ERROR');
         context.res = {
             status: 400,
             body: {
                 error: "Missing required fields",
-                message: "CreatedUserID and SessionToken are required in the request body"
+                message: "CreatedUserID and SessionToken are required in the request body",
+                log: getLog()
             }
         };
         return;
     }
 
-    const { CreatedUserID, SessionToken, DeviceID, DeviceName } = req.body;
+    const { CreatedUserID, SessionToken, DeviceID } = req.body;
+    context.log("Print variables =", CreatedUserID, SessionToken, DeviceID);
 
     // Validate session token
     if (SessionToken !== VALID_TOKEN) {
+        addLog('Invalid session token', 'ERROR');
         context.res = {
             status: 401,
             body: {
                 error: "Invalid session token",
-                message: "The provided session token is invalid or expired"
+                message: "The provided session token is invalid or expired",
+                log: getLog()
             }
         };
         return;
     }
 
-    // Filter devices based on CreatedUserID
-    let userDevices = staticDevices.filter(device => device.CreatedUserID === CreatedUserID);
+    try {
+        // Create connection pool
+        context.log("await sql.connect(config)", config);
+        const pool = await sql.connect(config);
+        context.log("getDevicesFromDB", pool);
 
-    // If no devices found for the user
-    if (userDevices.length === 0) {
-        context.res = {
-            status: 404,
-            body: {
-                error: "No devices found",
-                message: `No devices found for user ${CreatedUserID}`
-            }
-        };
-        return;
-    }
+        // Get devices from database
+        const userDevices = await getDevicesFromDB(pool, CreatedUserID, DeviceID);
+        context.log("Return : getDevicesFromDB", userDevices);
 
-    // If device filters are provided, apply them
-    if (DeviceID || DeviceName) {
-        userDevices = userDevices.filter(device => {
-            if (DeviceID && device.DeviceID === DeviceID) return true;
-            if (DeviceName && device.DeviceName === DeviceName) return true;
-            return false;
-        });
-
-        // If no matching devices found after filtering
+        // If no devices found for the user
         if (userDevices.length === 0) {
+            addLog(`No devices found for user ${CreatedUserID}`, 'WARN');
             context.res = {
                 status: 404,
                 body: {
-                    error: "No matching devices found",
-                    message: "No devices found matching the provided criteria"
+                    error: "No devices found",
+                    message: `No devices found for user ${CreatedUserID}`,
+                    log: getLog()
                 }
             };
             return;
         }
+
+        // Get unique device types from the filtered devices
+        const deviceTypes = [...new Set(userDevices.map(device => device.DeviceType))];
+
+        // Get applicable states from database
+        const applicableStates = await getStatesFromDB(pool, deviceTypes);
+
+        // Transform the results to match the expected format
+        const devices = userDevices.map(device => ({
+            DeviceID: device.DeviceID,
+            DeviceName: device.DeviceName,
+            DeviceType: device.DeviceType,
+            Status: device.DeviceState,  // Map DeviceState to Status for frontend
+            // Keep other fields for potential future use
+            SerialNumber: device.SerialNumber,
+            DeviceTypeID: device.DeviceTypeID,
+            CreatedUserID: device.CreatedUserID,
+            CreatedByUserName: device.CreatedByUserName,
+            DeviceStateID: device.DeviceStateID,
+            LastEvent: {
+                EventID: device.LastEventID,
+                EventValueID: device.LastEventValueID,
+                EventValue: device.LastEventValue,
+                EventTypeID: device.LastEventTypeID,
+                EventTypeName: device.LastEventTypeName
+            }
+        }));
+
+        // Transform states to match frontend expectations
+        const transformedStates = applicableStates.map(state => ({
+            StateID: state.StateTypeID,  // Map StateTypeID to StateID for frontend
+            StateName: state.StateName,
+            DeviceType: state.DeviceType,
+            // Keep other fields for potential future use
+            StateSetTo: state.StateSetTo,
+            DeviceTypeID: state.DeviceTypeID,
+            FunctionID: state.FunctionID
+        }));
+
+        // Return the transformed devices and states
+        context.res = {
+            status: 200,
+            body: {
+                devices: devices,
+                count: devices.length,
+                states: transformedStates,
+                log: getLog()
+            }
+        };
+
+    } catch (err) {
+        addLog(`Database error: ${err.message}`, 'ERROR');
+        context.log.error('Database error:', err);
+        context.res = {
+            status: 500,
+            body: {
+                error: "Database error",
+                message: "An error occurred while fetching data from the database",
+                log: getLog()
+            }
+        };
     }
-
-    // Get unique device types from the filtered devices
-    const deviceTypes = [...new Set(userDevices.map(device => device.DeviceType))];
-
-    // Get applicable states for the device types
-    const applicableStates = staticStates.filter(state => 
-        deviceTypes.includes(state.DeviceType)
-    );
-
-    // Return the filtered devices and applicable states
-    context.res = {
-        status: 200,
-        body: {
-            devices: userDevices,
-            count: userDevices.length,
-            states: applicableStates
-        }
-    };
 }
