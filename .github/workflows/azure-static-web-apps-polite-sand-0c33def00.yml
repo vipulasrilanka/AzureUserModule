@@ -1,3 +1,4 @@
+
 name: Azure Static Web Apps CI/CD
 
 on:
@@ -22,7 +23,7 @@ jobs:
       
       - name: Generate Version Info
         run: |
-          echo "window.APP_VERSION = '1.0.0.001B';" > client/version.js
+          echo "window.APP_VERSION = '1.0.0';" > client/version.js
           echo "window.DEPLOY_TIME = '$(date -u +"%Y-%m-%d %H:%M:%S UTC")';" >> client/version.js
       
       - name: Generate Config File
@@ -35,14 +36,7 @@ jobs:
           echo "  SET_DEVICE_URL: '${{ secrets.SET_DEVICE_URL }}'," >> client/config.js
           echo "  SET_DEVICE_KEY: '${{ secrets.SET_DEVICE_KEY }}'" >> client/config.js
           echo "};" >> client/config.js
-      
-      - name: Cleanup Staging Environments
-        uses: Azure/static-web-apps-deploy@v1
-        with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_POLITE_SAND_0C33DEF00 }}
-          action: "close"
-          app_location: "client"
-      
+            
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
@@ -50,15 +44,14 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_POLITE_SAND_0C33DEF00 }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          app_location: "client"
-          api_location: "server"
-          output_location: "."
+          app_location: "./client" # App source code path
+          api_location: "" # Api source code path - optional
+          output_location: "." # Built app content directory - optional
 
   close_pull_request_job:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
     name: Close Pull Request Job
-    needs: build_and_deploy_job
-    if: ${{ github.event_name == 'pull_request' && github.event.action == 'closed' }}
     steps:
       - name: Close Pull Request
         id: closepullrequest
@@ -66,4 +59,3 @@ jobs:
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_POLITE_SAND_0C33DEF00 }}
           action: "close"
-          app_location: "client"
