@@ -79,15 +79,15 @@ async function loadDevices() {
             
             data.devices.forEach(device => {
                 const row = document.createElement('tr');
-                const stateOptions = getStateOptions(device.DeviceType, data.states);
+                const stateOptions = getStateOptions(device.deviceType, data.states);
                 row.innerHTML = `
-                    <td>${device.DeviceName}</td>
-                    <td id="current-state-${device.DeviceID}">${device.Status}</td>
+                    <td>${device.deviceName}</td>
+                    <td id="current-state-${device.deviceId}">${device.deviceState}</td>
                     <td>
-                        <select id="select-${device.DeviceID}">${stateOptions}</select>
+                        <select id="select-${device.deviceId}">${stateOptions}</select>
                     </td>
                     <td>
-                        <button onclick="setDeviceState('${device.DeviceID}', document.getElementById('select-${device.DeviceID}').value)">Set</button>
+                        <button onclick="setDeviceState('${device.deviceId}', document.getElementById('select-${device.deviceId}').value)">Set</button>
                     </td>
                 `;
                 tableBody.appendChild(row);
@@ -112,7 +112,7 @@ function getStateOptions(deviceType, states) {
     
     // Create options from the filtered states
     return deviceStates.map(state => 
-        `<option value="${state.StateID}">${state.StateName}</option>`
+        `<option value="${state.StateTypeID}">${state.StateName}</option>`
     ).join('');
 }
 

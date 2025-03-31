@@ -22,7 +22,7 @@ jobs:
       
       - name: Generate Version Info
         run: |
-          echo "window.APP_VERSION = '1.0.0';" > client/version.js
+          echo "window.APP_VERSION = '1.0.0.001B';" > client/version.js
           echo "window.DEPLOY_TIME = '$(date -u +"%Y-%m-%d %H:%M:%S UTC")';" >> client/version.js
       
       - name: Generate Config File
