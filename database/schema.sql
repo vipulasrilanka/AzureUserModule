@@ -1,3 +1,10 @@
+-- Drop all views first
+IF EXISTS (SELECT * FROM sys.views WHERE name = 'LatestValueChanges' AND schema_id = SCHEMA_ID('dbo'))
+    DROP VIEW [dbo].[LatestValueChanges];
+
+IF EXISTS (SELECT * FROM sys.views WHERE name = 'DeviceMasterStates' AND schema_id = SCHEMA_ID('dbo'))
+    DROP VIEW [dbo].[DeviceMasterStates];
+    
 -- Drop existing tables in reverse dependency order
 IF EXISTS (SELECT * FROM sys.tables WHERE name = 'Events' AND schema_id = SCHEMA_ID('dbo'))
     DROP TABLE [dbo].[Events];
