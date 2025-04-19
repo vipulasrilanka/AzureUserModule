@@ -77,20 +77,62 @@ async function loadDevices() {
             const tableBody = document.getElementById('device-data');
             tableBody.innerHTML = '';
             
+            // Group controls by device
+            const deviceControls = {};
             data.devices.forEach(device => {
+                if (!deviceControls[device.deviceName]) {
+                    deviceControls[device.deviceName] = {
+                        deviceId: device.deviceId,
+                        controls: []
+                    };
+                }
+                deviceControls[device.deviceName].controls.push({
+                    controlName: device.controlName,
+                    controlType: device.controlType,
+                    currentState: device.deviceState,
+                    stateOptions: getStateOptions(device.controlType, data.states)
+                });
+            });
+
+            // Create rows for each device with its controls
+            Object.entries(deviceControls).forEach(([deviceName, deviceData]) => {
                 const row = document.createElement('tr');
-                const stateOptions = getStateOptions(device.deviceType, data.states);
-                row.innerHTML = `
-                    <td>${device.deviceName}</td>
-                    <td id="current-state-${device.deviceId}">${device.deviceState}</td>
+                
+                // Device name cell (spans all controls)
+                const deviceCell = document.createElement('td');
+                deviceCell.rowSpan = deviceData.controls.length;
+                deviceCell.textContent = deviceName;
+                row.appendChild(deviceCell);
+
+                // First control
+                const firstControl = deviceData.controls[0];
+                row.innerHTML += `
+                    <td>${firstControl.controlName}</td>
+                    <td id="current-state-${deviceData.deviceId}-${firstControl.controlType}">${firstControl.currentState}</td>
                     <td>
-                        <select id="select-${device.deviceId}">${stateOptions}</select>
+                        <select id="select-${deviceData.deviceId}-${firstControl.controlType}">${firstControl.stateOptions}</select>
                     </td>
                     <td>
-                        <button onclick="setDeviceState('${device.deviceId}', document.getElementById('select-${device.deviceId}').value)">Set</button>
+                        <button onclick="setDeviceState('${deviceData.deviceId}', '${firstControl.controlType}', document.getElementById('select-${deviceData.deviceId}-${firstControl.controlType}').value)">Set</button>
                     </td>
                 `;
                 tableBody.appendChild(row);
+
+                // Additional controls for the same device
+                deviceData.controls.slice(1).forEach(control => {
+                    const controlRow = document.createElement('tr');
+                    controlRow.innerHTML = `
+                        <td>${control.controlName}</td>
+                        <td id="current-state-${deviceData.deviceId}-${control.controlType}">${control.currentState}</td>
+                        <td>
+                            <select id="select-${deviceData.deviceId}-${control.controlType}">${control.stateOptions}</select>
+                        </td>
+                        <td>
+                            <button onclick="setDeviceState('${deviceData.deviceId}', '${control.controlType}', document.getElementById('select-${deviceData.deviceId}-${control.controlType}').value)">Set</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(controlRow);
+                });
             });
         } else {
             alert(data.message || 'Failed to load devices. Please try again.');
@@ -106,13 +148,14 @@ async function loadDevices() {
     }
 }
 
-function getStateOptions(deviceType, states) {
-    // Filter states for the given device type
-    const deviceStates = states.filter(state => state.DeviceType === deviceType);
+// Function to get state options for a control type
+function getStateOptions(controlType, states) {
+    // Filter states for the given control type
+    const controlStates = states.filter(state => state.ControlType === controlType);
     
     // Create options from the filtered states
-    return deviceStates.map(state => 
-        `<option value="${state.StateTypeID}">${state.StateName}</option>`
+    return controlStates.map(state => 
+        `<option value="${state.ControlValueID}">${state.ActionText || state.ValueDescription}</option>`
     ).join('');
 }
 
@@ -132,7 +175,8 @@ function showMessage(message, type = 'info') {
     }
 }
 
-async function setDeviceState(deviceId, stateId) {
+// Function to set device state
+async function setDeviceState(deviceId, controlType, stateId) {
     try {
         const response = await fetch(`${window.APP_CONFIG.SET_DEVICE_URL}?code=${window.APP_CONFIG.SET_DEVICE_KEY}`, {
             method: 'POST',
@@ -141,6 +185,7 @@ async function setDeviceState(deviceId, stateId) {
             },
             body: JSON.stringify({
                 DeviceID: deviceId,
+                ControlType: controlType,
                 StateID: stateId,
                 SessionToken: localStorage.getItem('authToken')
             })
@@ -154,7 +199,7 @@ async function setDeviceState(deviceId, stateId) {
         const data = await response.json();
         
         // Update the UI with the new device state
-        const currentStateElement = document.getElementById(`current-state-${deviceId}`);
+        const currentStateElement = document.getElementById(`current-state-${deviceId}-${controlType}`);
         if (currentStateElement) {
             currentStateElement.textContent = data.device.Status;
         }
