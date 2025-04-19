@@ -1,20 +1,65 @@
-// Simulated user database - This can be replaced with actual database calls later
-function validateCredentials(username, passwordHash) {
-    // Hardcoded valid credentials for testing
-    const validUsers = [
-        { username: "admin", passwordHash: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8" }, // This is the hash for "password"
-        { username: "user1", passwordHash: "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b" }  // This is the hash for "1"
-    ];
+const sql = require('mssql');
 
-    return validUsers.some(user => 
-        user.username === username && user.passwordHash === passwordHash
-    );
+// SQL configuration
+const config = {
+    user: 'um1001admin',
+    password: 'SQL&1001',
+    server: 'sv-user-manager.database.windows.net',
+    database: 'db-userManager',
+    options: {
+        encrypt: true,
+        trustServerCertificate: false
+    }
+};
+
+// Reuse the connection pool between Azure Function invocations
+let poolPromise;
+function getPool() {
+    if (!poolPromise) {
+        poolPromise = sql.connect(config);
+    }
+    return poolPromise;
 }
 
-module.exports = async function (context, req) {
-    context.log('JavaScript HTTP trigger function processed a request.');
+// Placeholder for token generation
+async function getNewToken(userName, context) {
+    let returnValue = {
+        status: true,
+        token: "dummy-token" // Replace with real JWT later
+    };
+    context.log('[700]', returnValue);
+    return returnValue;
+}
 
-    // Return 404 for GET requests
+// Fetch password hash for a given user
+async function getPasswordHash(userName, context) {
+    let returnValue = { error: null, passwordHash: null };
+    try {
+        const pool = await getPool();
+        const result = await pool.request()
+            .input('UserName', sql.VarChar, userName)
+            .query('SELECT PasswordHash FROM [dbo].[PasswordHash] WHERE UserName = @UserName');
+
+        if (result.recordset.length > 0) {
+            returnValue.passwordHash = result.recordset[0].PasswordHash;
+        } else {
+            const err = new Error(`No records found for user '${userName}'`);
+            err.name = "RecordNotFoundError";
+            context.log.error(err.message);
+            returnValue.error = err;
+        }
+    } catch (err) {
+        context.log.error('Database query error:', err);
+        returnValue.error = err;
+    }
+    return returnValue;
+}
+
+// Azure Function HTTP handler
+module.exports = async function (context, req) {
+    context.log('Azure Function processing request...');
+
+    // Reject GET method
     if (req.method === "GET") {
         context.res = {
             status: 404,
@@ -23,10 +68,9 @@ module.exports = async function (context, req) {
         return;
     }
 
-    // Handle POST requests
     if (req.method === "POST") {
-        const username = req.body && req.body.username;
-        const passwordHash = req.body && req.body.passwordHash;
+        const username = req.body?.username;
+        const passwordHash = req.body?.passwordHash;
 
         if (!username || !passwordHash) {
             context.res = {
@@ -36,14 +80,45 @@ module.exports = async function (context, req) {
             return;
         }
 
-        // Validate credentials
-        if (validateCredentials(username, passwordHash)) {
-            // Return a fixed token for successful authentication
-            // In a production environment, you would generate a proper JWT or other secure token
+        // Fetch stored password hash
+        let value;
+        try {
+            value = await getPasswordHash(username, context);
+        } catch (err) {
+            context.res = {
+                status: 500,
+                body: "Internal Server Error"
+            };
+            return;
+        }
+
+        if (value.error) {
+            context.log('[1] PasswordHash not found. ERROR =', value.error.message);
+            context.res = {
+                status: 401,
+                body: "Invalid User ID"
+            };
+            return;
+        }
+
+        context.log('PasswordHash for user [', username, '] =', value.passwordHash);
+
+        // Compare with submitted hash
+        if (value.passwordHash === passwordHash) {
+            // Placeholder token logic
+            const newToken = await getNewToken(username, context);
+            if (!newToken.status) {
+                context.res = {
+                    status: 500,
+                    body: "Cannot get token. Internal Error."
+                };
+                return;
+            }
+
             context.res = {
                 status: 200,
                 body: {
-                    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ",
+                    token: newToken.token,
                     message: "Authentication successful"
                 }
             };
@@ -56,9 +131,9 @@ module.exports = async function (context, req) {
         return;
     }
 
-    // Return 404 for all other HTTP methods
+    // Fallback for unsupported HTTP methods
     context.res = {
         status: 404,
         body: "Method not supported"
     };
-}
+};
