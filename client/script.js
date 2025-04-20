@@ -25,7 +25,7 @@ async function login() {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                username: username,
+                userName: username,
                 passwordHash: passwordHash
             })
         });
@@ -66,8 +66,8 @@ async function loadDevices() {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                CreatedUserID: username,
-                SessionToken: sessionToken
+                userName: username,
+                sessionToken: sessionToken
             })
         });
 
