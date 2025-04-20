@@ -31,7 +31,7 @@ function getPool() {
 
 /**
  * Fetches the password hash for a given user from the database
- * @param {string} userName - The username to look up
+ * @param {string} userName - The userName to look up
  * @param {Object} context - Azure Function context object
  * @returns {Promise<Object>} An object containing error (if any) and passwordHash
  */
@@ -59,19 +59,19 @@ async function getPasswordHash(userName, context) {
 }
 
 /**
- * Retrieves the UserID for a given username
+ * Retrieves the UserID for a given userName
  * @param {sql.ConnectionPool} pool - SQL connection pool
- * @param {string} username - The username to look up
+ * @param {string} userName - The userName to look up
  * @returns {Promise<number>} The UserID
  * @throws {Error} If user is not found
  */
-async function getUserID(pool, username) {
+async function getUserID(pool, userName) {
     const result = await pool.request()
-        .input('UserName', sql.VarChar, username)
+        .input('UserName', sql.VarChar, userName)
         .query(`SELECT UserID FROM Users WHERE UserName = @UserName`);
 
     if (result.recordset.length === 0) {
-        throw new Error(`User ${username} not found`);
+        throw new Error(`User ${userName} not found`);
     }
 
     return result.recordset[0].UserID;
@@ -127,14 +127,14 @@ async function getExistingValidToken(pool, userID, tokenEventValueID) {
 /**
  * Invalidates an existing token
  * @param {sql.ConnectionPool} pool - SQL connection pool
- * @param {string} username - The username of the token owner
+ * @param {string} userName - The userName of the token owner
  * @param {number} userID - The ID of the user
  * @param {number} invalidateEventValueID - The EventValueID for token invalidation
  * @param {Object} lastEvent - The event record to invalidate
  * @returns {Promise<void>}
  */
-async function invalidateToken(pool, username, userID, invalidateEventValueID, lastEvent) {
-    const invalidateDescription = `TOKEN EXP USER=${username} (INVALIDATED)`;
+async function invalidateToken(pool, userName, userID, invalidateEventValueID, lastEvent) {
+    const invalidateDescription = `TOKEN EXP USER=${userName} (INVALIDATED)`;
     await pool.request()
         .input('EventValueID', sql.Int, invalidateEventValueID)
         .input('EventDescription', sql.VarChar, invalidateDescription)
@@ -151,17 +151,17 @@ async function invalidateToken(pool, username, userID, invalidateEventValueID, l
 /**
  * Creates a new token for a user
  * @param {sql.ConnectionPool} pool - SQL connection pool
- * @param {string} username - The username for whom the token is being created
+ * @param {string} userName - The userName for whom the token is being created
  * @param {number} userID - The ID of the user
  * @param {number} tokenEventValueID - The EventValueID for token creation
  * @returns {Promise<string>} The new session key
  */
-async function createNewToken(pool, username, userID, tokenEventValueID) {
+async function createNewToken(pool, userName, userID, tokenEventValueID) {
     const sessionKey = `session-${Math.random().toString(36).substr(2)}-${Date.now()}`;
     const currentTime = new Date();
     const expireTime = new Date(currentTime.getTime() + 2 * 60 * 60 * 1000); // 2 hours
 
-    const eventDescription = `TOKEN NEW USER=${username} EXP=${expireTime.toISOString()}`;
+    const eventDescription = `TOKEN NEW USER=${userName} EXP=${expireTime.toISOString()}`;
 
     await pool.request()
         .input('EventValueID', sql.Int, tokenEventValueID)
@@ -181,7 +181,7 @@ async function createNewToken(pool, username, userID, tokenEventValueID) {
 
 /**
  * Generates a new token for a user, invalidating any existing token
- * @param {string} userName - The username for whom the token is being generated
+ * @param {string} userName - The userName for whom the token is being generated
  * @param {Object} context - Azure Function context object
  * @returns {Promise<Object>} An object containing status and token/error information
  */
@@ -232,13 +232,13 @@ module.exports = async function (context, req) {
     }
 
     if (req.method === "POST") {
-        const username = req.body?.username;
+        const userName = req.body?.userName;
         const passwordHash = req.body?.passwordHash;
 
-        if (!username || !passwordHash) {
+        if (!userName || !passwordHash) {
             context.res = {
                 status: 400,
-                body: "Please provide both username and passwordHash in the request body"
+                body: "Please provide both User Name and Password details in the request body"
             };
             return;
         }
@@ -246,7 +246,7 @@ module.exports = async function (context, req) {
         // Fetch stored password hash
         let value;
         try {
-            value = await getPasswordHash(username, context);
+            value = await getPasswordHash(userName, context);
         } catch (err) {
             context.res = {
                 status: 500,
@@ -264,12 +264,12 @@ module.exports = async function (context, req) {
             return;
         }
 
-        context.log('PasswordHash for user [', username, '] =', value.passwordHash);
+        context.log('PasswordHash for user [', userName, '] =', value.passwordHash);
 
         // Compare with submitted hash
         if (value.passwordHash === passwordHash) {
             // Placeholder token logic
-            const newToken = await getNewToken(username, context);
+            const newToken = await getNewToken(userName, context);
             if (!newToken.status) {
                 context.res = {
                     status: 500,
