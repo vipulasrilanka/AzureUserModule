@@ -206,12 +206,13 @@ window.login = login;
 window.setDeviceState = setDeviceState;
 
 // Add at the beginning of the file
+// Service state check function
 async function checkServiceAvailability() {
     try {
         const response = await fetch(`${window.APP_CONFIG.GET_SERVICE_STATE_URL}?code=${window.APP_CONFIG.GET_SERVICE_STATE_KEY}`);
         if (response.status === 200) {
             document.getElementById('loading-screen').style.display = 'none';
-            document.getElementById('login-page').style.display = 'block';
+            document.getElementById('login-page').style.display = 'flex'; // Changed from 'block' to 'flex'
         } else {
             setTimeout(checkServiceAvailability, 2000);
         }
