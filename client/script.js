@@ -205,28 +205,66 @@ document.addEventListener('DOMContentLoaded', displayVersionInfo);
 window.login = login;
 window.setDeviceState = setDeviceState;
 
-// Add at the beginning of the file
+// Add countdown timer functionality
+let timeLeft = 50; // 50 seconds
+let countdownTimer;
+
+function updateCountdown() {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    const display = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    document.getElementById('countdown-timer').textContent = display;
+    
+    if (timeLeft <= 0) {
+        clearInterval(countdownTimer);
+        showServiceUnavailable();
+    }
+    timeLeft--;
+}
+
+function showServiceUnavailable() {
+    const loadingText = document.querySelector('.loading-text');
+    const countdownTimer = document.getElementById('countdown-timer');
+    const retryButton = document.getElementById('retry-button');
+    
+    loadingText.textContent = 'Service Unavailable';
+    countdownTimer.style.display = 'none';
+    retryButton.style.display = 'block';
+}
+
 // Service state check function
 async function checkServiceAvailability() {
     try {
         const response = await fetch(`${window.APP_CONFIG.GET_SERVICE_STATE_URL}?code=${window.APP_CONFIG.GET_SERVICE_STATE_KEY}`);
         if (response.status === 200) {
+            clearInterval(countdownTimer);
             document.getElementById('loading-screen').style.display = 'none';
-            document.getElementById('login-page').style.display = 'flex'; // Changed from 'block' to 'flex'
+            document.getElementById('login-page').style.display = 'flex';
         } else {
-            setTimeout(checkServiceAvailability, 2000);
+            if (timeLeft > 0) {
+                setTimeout(checkServiceAvailability, 2000);
+            }
         }
     } catch (error) {
         console.error('Service check failed:', error);
-        setTimeout(checkServiceAvailability, 2000);
+        if (timeLeft > 0) {
+            setTimeout(checkServiceAvailability, 2000);
+        }
     }
 }
 
-// Add this to the DOMContentLoaded event listener
+// Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
-    displayVersionInfo();
     // Hide login page initially
     document.getElementById('login-page').style.display = 'none';
+    // Start countdown timer
+    countdownTimer = setInterval(updateCountdown, 1000);
     // Start checking service availability
     checkServiceAvailability();
+    // Display version info
+    displayVersionInfo();
 });
+
+// Make functions available globally
+window.login = login;
+window.setDeviceState = setDeviceState;

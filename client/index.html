@@ -9,9 +9,13 @@
 <body>
     <!-- Loading screen -->
     <div id="loading-screen" class="loading-screen">
-        <div class="loading-text">Loading</div>
+        <div class="loading-content">
+            <div class="loading-text">Loading</div>
+            <div id="countdown-timer" class="countdown-timer">00:00:50</div>
+            <button id="retry-button" class="retry-button" style="display: none;" onclick="location.reload()">Retry</button>
+        </div>
     </div>
-
+    
     <!-- Page header -->
     <header>
         <h1>System Control Cloud</h1>
