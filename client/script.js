@@ -208,7 +208,7 @@ window.setDeviceState = setDeviceState;
 // Add at the beginning of the file
 async function checkServiceAvailability() {
     try {
-        const response = await fetch(`${window.APP_CONFIG.SET_SERVICE_URL}?code=${window.APP_CONFIG.SET_SERVICE_KEY}`);
+        const response = await fetch(`${window.APP_CONFIG.GET_SERVICE_STATE_URL}?code=${window.APP_CONFIG.GET_SERVICE_STATE_KEY}`);
         if (response.status === 200) {
             document.getElementById('loading-screen').style.display = 'none';
             document.getElementById('login-page').style.display = 'block';

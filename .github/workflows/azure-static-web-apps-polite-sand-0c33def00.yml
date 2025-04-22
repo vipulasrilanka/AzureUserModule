@@ -23,7 +23,7 @@ jobs:
       
       - name: Generate Version Info
         run: |
-          echo "window.APP_VERSION = '1.0.0.DEV';" > client/version.js
+          echo "window.APP_VERSION = '1.0.0.DEV.01';" > client/version.js
           echo "window.DEPLOY_TIME = '$(date -u +"%Y-%m-%d %H:%M:%S UTC")';" >> client/version.js
       
       - name: Generate Config File
@@ -35,6 +35,8 @@ jobs:
           echo "  GET_DEVICE_KEY: '${{ secrets.GET_DEVICE_KEY }}'," >> client/config.js
           echo "  SET_DEVICE_URL: '${{ secrets.SET_DEVICE_URL }}'," >> client/config.js
           echo "  SET_DEVICE_KEY: '${{ secrets.SET_DEVICE_KEY }}'" >> client/config.js
+          echo "  GET_SERVICE_STATE_URL: '${{ secrets.GET_SERVICE_STATE_URL }}'," >> client/config.js
+          echo "  GET_SERVICE_STATE_KEY: '${{ secrets.GET_SERVICE_STATE_KEY }}'" >> client/config.js
           echo "};" >> client/config.js
             
       - name: Build And Deploy
