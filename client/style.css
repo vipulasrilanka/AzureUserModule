@@ -42,10 +42,14 @@ header {
 
 /* Login page styles */
 #login-page {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: calc(100vh - 200px);
     padding: 20px;
 }
 
