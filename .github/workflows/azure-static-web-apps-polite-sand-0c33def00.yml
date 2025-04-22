@@ -34,7 +34,7 @@ jobs:
           echo "  GET_DEVICE_URL: '${{ secrets.GET_DEVICE_URL }}'," >> client/config.js
           echo "  GET_DEVICE_KEY: '${{ secrets.GET_DEVICE_KEY }}'," >> client/config.js
           echo "  SET_DEVICE_URL: '${{ secrets.SET_DEVICE_URL }}'," >> client/config.js
-          echo "  SET_DEVICE_KEY: '${{ secrets.SET_DEVICE_KEY }}'" >> client/config.js
+          echo "  SET_DEVICE_KEY: '${{ secrets.SET_DEVICE_KEY }}'," >> client/config.js
           echo "  GET_SERVICE_STATE_URL: '${{ secrets.GET_SERVICE_STATE_URL }}'," >> client/config.js
           echo "  GET_SERVICE_STATE_KEY: '${{ secrets.GET_SERVICE_STATE_KEY }}'" >> client/config.js
           echo "};" >> client/config.js
