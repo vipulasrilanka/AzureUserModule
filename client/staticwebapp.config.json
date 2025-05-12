@@ -2,6 +2,9 @@
   "routes": [
     {
       "route": "/api/settings",
+      "methods": [
+        "get"
+      ],
       "allowedRoles": [
         "authenticated"
       ]
