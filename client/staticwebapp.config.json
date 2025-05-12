@@ -13,7 +13,7 @@
   "routes": [
     {
       "route": "/api/settings",
-      "allowedRoles": ["anonymous"]
+      "allowedRoles": ["authenticated"]
     },
     {
       "route": "/*",
