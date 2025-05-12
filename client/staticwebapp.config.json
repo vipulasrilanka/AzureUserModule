@@ -11,6 +11,10 @@
     },
     {
       "route": "/*",
+      "methods": [
+        "get",
+        "post"
+      ],
       "statusCode": 200,
       "allowedRoles": [
         "authenticated"
